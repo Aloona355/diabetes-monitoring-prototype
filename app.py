@@ -309,43 +309,35 @@ def render_sidebar():
 
     default_index=0,
 
-    styles={
-        "container": {
-            "padding": "0!important",
-            "background-color": "transparent",
-        },
-
-        "icon": {
-            "color": "white",
-            "font-size": "20px",
-        },
-
-        "nav-link": {
-            "color": "white",
-            "font-size": "16px",
-            "font-weight": "600",
-            "text-align": "left",
-            "margin": "0px",
-            "padding": "14px 18px",
-            "border-radius": "0px",
-            "--hover-color": "rgba(255,255,255,0.08)",
-        },
-
-        "nav-link-selected": {
-            "background-color": "rgba(255,255,255,0.08)",
-            "color": "white",
-            "border-left": "4px solid #22d3ee",
-        },
-    }
+styles={
+    "container": {
+        "padding": "0!important",
+        "background-color": "transparent",
+    },
+    "icon": {
+        "color": "white",
+        "font-size": "20px",
+    },
+    "nav-link": {
+        "color": "white",
+        "font-size": "16px",
+        "font-weight": "600",
+        "text-align": "left",
+        "margin": "0px",
+        "padding": "14px 18px",
+        "border-radius": "0px",
+        "--hover-color": "rgba(255,255,255,0.08)",
+    },
+    "nav-link-selected": {
+        "background-color": "transparent",
+        "color": "white",
+    },
+}
 )
 
         st.markdown("<br><br><hr><br>", unsafe_allow_html=True)
 
-        if st.button("Logout", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.page = "login"
-            st.session_state.auth_mode = "login"
-            st.rerun()
+  
 
     return selected
 
