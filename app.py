@@ -18,6 +18,9 @@ def get_base64_logo():
     with open(LOGO, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
+def clean_pdf_text(text):
+    return str(text).encode("latin-1", "ignore").decode("latin-1")
+
 
 def create_pdf_report(patient, risk_score):
     pdf = FPDF()
@@ -38,16 +41,14 @@ def create_pdf_report(patient, risk_score):
         "Estimated Glucose": "145 mg/dL",
         "Foot Health Status": "Low Risk",
         "Overall Risk Score": f"{risk_score}/100",
-        "Recommendation": (
-            "Maintain regular glucose monitoring, review dietary carbohydrate intake, "
-            "and schedule retinal screening if glucose instability persists."
-        )
+        "Recommendation": "Maintain regular glucose monitoring and schedule retinal screening if needed."
     }
 
     for key, value in data.items():
-        pdf.cell(0, 9, f"{key}: {value}", ln=True)
+        line = clean_pdf_text(f"{key}: {value}")
+        pdf.cell(0, 9, line, ln=True)
 
-    return pdf.output(dest="S").encode("latin-1")
+    return pdf.output(dest="S").encode("latin-1", "ignore")
 
 
 # --------------------------------------------------
