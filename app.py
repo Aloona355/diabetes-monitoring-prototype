@@ -4,472 +4,350 @@ from PIL import Image
 from fpdf import FPDF
 from datetime import datetime
 
-# =========================
-# PAGE CONFIG
-# =========================
-st.set_page_config(
-    page_title="Glucovision AI",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
 
-LOGO = "IMG_5991.png"
+LOGO = "PHOTO-2026-02-17-21-43-19.jpeg"
 
-# =========================
-# PREMIUM UI STYLE
-# =========================
 st.markdown("""
 <style>
+.stApp {
+    background: linear-gradient(135deg, #f7fbfc 0%, #eef8fa 100%);
+    color: #0B2F4A;
+}
 
 #MainMenu, footer, header {
     visibility: hidden;
 }
 
-.stApp {
-    background: #071C2C;
-    color: white;
-    font-family: 'Segoe UI', sans-serif;
-}
-
 .block-container {
-    padding-top: 1rem;
-    max-width: 1400px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 1200px;
 }
 
-/* SIDEBAR */
-
-[data-testid="stSidebar"] {
-    background: #061826;
-    border-right: 1px solid rgba(255,255,255,0.08);
+.card {
+    background: white;
+    padding: 28px;
+    border-radius: 20px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 8px 24px rgba(11,47,74,0.08);
+    margin-bottom: 22px;
 }
 
-[data-testid="stSidebar"] * {
-    color: white !important;
+.hero {
+    text-align: center;
+    padding: 35px 20px 25px 20px;
 }
 
-/* TITLES */
-
-.main-title {
-    font-size: 48px;
+.hero-title {
+    font-size: 44px;
     font-weight: 800;
-    color: white;
+    color: #075985;
+    margin-top: 10px;
+}
+
+.hero-subtitle {
+    font-size: 18px;
+    color: #0f766e;
+    margin-top: 8px;
+}
+
+.section-title {
+    font-size: 26px;
+    font-weight: 750;
+    color: #075985;
     margin-bottom: 10px;
 }
 
-.sub-title {
-    color: #AFC7D9;
-    font-size: 18px;
-    line-height: 1.8;
-}
-
-/* CARDS */
-
-.card {
-    background: #0D2436;
-    padding: 24px;
-    border-radius: 22px;
-    border: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 20px;
-}
-
 .metric-card {
-    background: linear-gradient(145deg,#0C2436,#12314A);
+    background: white;
     padding: 24px;
-    border-radius: 22px;
-    border: 1px solid rgba(255,255,255,0.06);
-    min-height: 160px;
+    border-radius: 18px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 6px 18px rgba(11,47,74,0.07);
+    text-align: center;
 }
 
 .metric-title {
-    color: #8FB5CE;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    color: #64748b;
+    font-weight: 600;
 }
 
 .metric-value {
-    color: white;
-    font-size: 38px;
+    font-size: 36px;
+    color: #0B2F4A;
     font-weight: 800;
-    margin-top: 18px;
 }
-
-.metric-note {
-    color: #37D39A;
-    margin-top: 8px;
-    font-size: 14px;
-}
-
-/* BUTTON */
 
 .stButton > button {
-    width: 100%;
-    border-radius: 12px;
-    background: linear-gradient(90deg,#0B7FAB,#0E9F9B);
+    background: linear-gradient(90deg, #0369a1, #0f766e);
     color: white;
     border: none;
-    height: 48px;
-    font-size: 15px;
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
     font-weight: 700;
 }
 
 .stButton > button:hover {
-    background: linear-gradient(90deg,#1390C1,#14B8A6);
+    background: linear-gradient(90deg, #075985, #115e59);
     color: white;
 }
 
-/* INPUTS */
-
-.stTextInput input,
-.stNumberInput input,
-.stSelectbox div {
-    border-radius: 10px !important;
+[data-testid="stSidebar"] {
+    background: #e6f4f6;
 }
-
-/* PDF */
-
-.pdf-box {
-    background: linear-gradient(145deg,#0C2436,#102A3F);
-    padding: 24px;
-    border-radius: 22px;
-    border: 1px solid rgba(255,255,255,0.06);
-}
-
-/* FOOTER */
-
-.footer-note {
-    text-align: center;
-    color: #88A7BB;
-    margin-top: 35px;
-    font-size: 13px;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# SESSION
-# =========================
 
-if "history" not in st.session_state:
-    st.session_state.history = []
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-# =========================
-# PDF REPORT
-# =========================
+if "page" not in st.session_state:
+    st.session_state.page = "login"
 
-def create_pdf(patient_name, patient_id, glucose, carbs, foot_risk, recommendation):
+if "patient" not in st.session_state:
+    st.session_state.patient = {}
 
+
+def create_pdf_report(patient, risk_score):
     pdf = FPDF()
     pdf.add_page()
-
-    pdf.set_font("Arial", "B", 18)
-    pdf.cell(0, 15, "Glucovision AI - Clinical Report", ln=True, align="C")
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Intelligent Diabetes Monitoring System Report", ln=True, align="C")
 
     pdf.ln(10)
-
     pdf.set_font("Arial", size=12)
 
-    report = {
-        "Patient Name": patient_name,
-        "Medical ID": patient_id,
-        "Generated Date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "Predicted Glucose": f"{glucose} mg/dL",
-        "Estimated Meal Carbohydrates": f"{carbs} g",
-        "Foot Assessment": foot_risk,
-        "Clinical Recommendation": recommendation,
+    data = {
+        "Generated on": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Patient Name": patient.get("name", "N/A"),
+        "Patient ID": patient.get("id", "N/A"),
+        "Age": patient.get("age", "N/A"),
+        "Gender": patient.get("gender", "N/A"),
+        "Diabetes Type": patient.get("type", "N/A"),
+        "Estimated Calories": "550 kcal",
+        "Estimated Carbohydrates": "65 g",
+        "Predicted Glucose": "145 mg/dL",
+        "Foot Risk": "Low",
+        "Overall Risk Score": f"{risk_score}/100",
+        "Recommendation": "Continue monitoring glucose and schedule periodic retinal screening."
     }
 
-    for k, v in report.items():
-        pdf.multi_cell(0, 10, f"{k}: {v}")
+    for key, value in data.items():
+        pdf.cell(0, 9, f"{key}: {value}", ln=True)
 
     return pdf.output(dest="S").encode("latin-1")
 
-# =========================
-# SIDEBAR
-# =========================
 
-with st.sidebar:
+def login_page():
+    st.markdown('<div class="hero">', unsafe_allow_html=True)
+    st.image(LOGO, width=230)
+    st.markdown('<div class="hero-title">Intelligent Diabetes Monitoring System</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hero-subtitle">Multimodal AI Prototype for Dietary Analysis, Wearable Data, Foot Assessment, and Retinal Awareness</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.image(LOGO, width=140)
+    left, center, right = st.columns([1, 1.4, 1])
 
-    st.markdown("## Glucovision AI")
+    with center:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
 
-    st.caption("Integrated AI Monitoring Platform")
+        st.markdown('<div class="section-title">Patient Login</div>', unsafe_allow_html=True)
+
+        name = st.text_input("Full Name")
+        patient_id = st.text_input("Patient ID")
+        age = st.number_input("Age", min_value=1, max_value=100, value=23)
+        gender = st.selectbox("Gender", ["Female", "Male"])
+        diabetes_type = st.selectbox("Diabetes Type", ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"])
+
+        if st.button("Start Monitoring", use_container_width=True):
+            if name.strip() == "":
+                st.error("Please enter patient name.")
+            else:
+                st.session_state.patient = {
+                    "name": name,
+                    "id": patient_id,
+                    "age": age,
+                    "gender": gender,
+                    "type": diabetes_type
+                }
+                st.session_state.logged_in = True
+                st.session_state.page = "upload"
+                st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+def upload_page():
+    st.sidebar.image(LOGO, width=120)
+    st.sidebar.markdown("### Patient Profile")
+    st.sidebar.write(f"Name: {st.session_state.patient.get('name')}")
+    st.sidebar.write(f"Age: {st.session_state.patient.get('age')}")
+    st.sidebar.write(f"Type: {st.session_state.patient.get('type')}")
+
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.page = "login"
+        st.rerun()
+
+    st.image(LOGO, width=150)
+    st.markdown('<div class="section-title">Upload Patient Data</div>', unsafe_allow_html=True)
+    st.write("Upload the required data to start the multimodal AI analysis.")
 
     st.markdown("---")
 
-    patient_name = st.text_input("Patient Name")
-    patient_id = st.text_input("Medical ID")
+    col1, col2, col3 = st.columns(3)
 
-    age = st.number_input(
-        "Age",
-        min_value=1,
-        max_value=100,
-        value=23
-    )
+    with col1:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Food Image")
+        food_img = st.file_uploader("Upload meal image", type=["jpg", "jpeg", "png"])
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    diabetes_type = st.selectbox(
-        "Diabetes Type",
-        [
-            "Type 1 Diabetes",
-            "Type 2 Diabetes",
-            "Prediabetes"
-        ]
-    )
+    with col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Wearable CSV")
+        wearable_csv = st.file_uploader("Upload wearable data", type=["csv"])
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col3:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Foot Image")
+        foot_img = st.file_uploader("Upload foot image", type=["jpg", "jpeg", "png"])
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.session_state.food_img = food_img
+    st.session_state.wearable_csv = wearable_csv
+    st.session_state.foot_img = foot_img
+
+    if food_img and wearable_csv and foot_img:
+        if st.button("Analyze Patient Data", use_container_width=True):
+            st.session_state.page = "dashboard"
+            st.rerun()
+    else:
+        st.info("Please upload all three files to continue.")
+
+
+def dashboard_page():
+    food_img = st.session_state.get("food_img")
+    wearable_csv = st.session_state.get("wearable_csv")
+    foot_img = st.session_state.get("foot_img")
+
+    st.sidebar.image(LOGO, width=120)
+    st.sidebar.markdown("### Navigation")
+
+    if st.sidebar.button("Back to Upload"):
+        st.session_state.page = "upload"
+        st.rerun()
+
+    if st.sidebar.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.page = "login"
+        st.rerun()
+
+    top1, top2 = st.columns([1, 5])
+    with top1:
+        st.image(LOGO, width=120)
+    with top2:
+        st.markdown('<div class="section-title">Patient Analysis Dashboard</div>', unsafe_allow_html=True)
+        st.write(f"Welcome, {st.session_state.patient.get('name')}")
 
     st.markdown("---")
 
-    st.markdown("### Upload Patient Data")
-
-    food_file = st.file_uploader(
-        "Meal Image",
-        type=["jpg", "png"]
-    )
-
-    wearable_file = st.file_uploader(
-        "Wearable CSV",
-        type=["csv"]
-    )
-
-    foot_file = st.file_uploader(
-        "Foot Image",
-        type=["jpg", "png"]
-    )
-
-# =========================
-# MAIN HEADER
-# =========================
-
-left, right = st.columns([1.2, 2])
-
-with left:
-    st.image(LOGO, width=240)
-
-with right:
-
-    st.markdown(
-        '<div class="main-title">Glucovision AI</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        """
-        <div class="sub-title">
-        AI-powered multimodal monitoring system developed as a graduation project 
-        for intelligent diabetic patient assessment using meal analysis, wearable 
-        data interpretation, diabetic foot screening, and clinical risk awareness.
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-st.write("")
-
-# =========================
-# ANALYSIS
-# =========================
-
-if food_file and wearable_file and foot_file:
-
-    glucose = 145
+    calories = 550
     carbs = 65
-    foot_risk = "Low Risk"
-    risk_score = 46
-
-    if carbs > 60:
-        meal_note = "This meal contains a relatively high carbohydrate level. A lighter meal is recommended later in the day to maintain glucose stability."
-    else:
-        meal_note = "Meal composition appears balanced based on estimated nutritional values."
-
-    if glucose > 140:
-        retina_note = "Persistent elevated glucose patterns detected. A retinal screening appointment is recommended."
-    else:
-        retina_note = "Current glucose trend does not indicate urgent retinal complications."
-
-    # =========================
-    # METRICS
-    # =========================
+    protein = 28
+    fat = 18
+    glucose = 145
+    foot_risk = "Low"
+    risk_score = 70
 
     m1, m2, m3, m4 = st.columns(4)
 
     with m1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Predicted Glucose</div>
-            <div class="metric-value">{glucose} mg/dL</div>
-            <div class="metric-note">Moderate Pattern</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f'<div class="metric-card"><div class="metric-title">Predicted Glucose</div><div class="metric-value">{glucose}</div><div>mg/dL</div></div>', unsafe_allow_html=True)
     with m2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Meal Carbohydrates</div>
-            <div class="metric-value">{carbs} g</div>
-            <div class="metric-note">Nutritional Estimate</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f'<div class="metric-card"><div class="metric-title">Risk Score</div><div class="metric-value">{risk_score}</div><div>/100</div></div>', unsafe_allow_html=True)
     with m3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Foot Assessment</div>
-            <div class="metric-value">Low</div>
-            <div class="metric-note">No ulcer detected</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        st.markdown(f'<div class="metric-card"><div class="metric-title">Foot Risk</div><div class="metric-value">{foot_risk}</div><div>No ulcer detected</div></div>', unsafe_allow_html=True)
     with m4:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-title">Integrated Risk Score</div>
-            <div class="metric-value">{risk_score}/100</div>
-            <div class="metric-note">Moderate Risk</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-title">Meal Carbs</div><div class="metric-value">{carbs}</div><div>g</div></div>', unsafe_allow_html=True)
 
-    st.write("")
+    st.markdown("---")
 
-    # =========================
-    # CONTENT
-    # =========================
+    left, right = st.columns(2)
 
-    c1, c2 = st.columns([1.1, 1])
-
-    with c1:
-
+    with left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
         st.subheader("Dietary Analysis")
-
-        st.image(food_file, use_container_width=True)
-
-        st.markdown(f"""
-        ### AI Nutritional Insight
-
-        {meal_note}
-
-        #### Estimated Values
-        - Calories: 550 kcal
-        - Carbohydrates: 65 g
-        - Protein: 28 g
-        - Fat: 18 g
-        """)
-
+        st.image(Image.open(food_img), caption="Uploaded Food Image", use_container_width=True)
+        c1, c2 = st.columns(2)
+        c1.metric("Calories", f"{calories} kcal")
+        c1.metric("Protein", f"{protein} g")
+        c2.metric("Carbohydrates", f"{carbs} g")
+        c2.metric("Fat", f"{fat} g")
+        st.success("Analysis completed")
         st.markdown('</div>', unsafe_allow_html=True)
 
+    with right:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        st.subheader("Wearable Data Interpretation")
-
-        df = pd.read_csv(wearable_file)
-
-        st.dataframe(df, use_container_width=True)
-
-        st.line_chart([120, 132, 145, 138, 141])
-
-        st.markdown(
-            "Wearable sensor analysis indicates moderate glucose fluctuation patterns across the monitored period."
-        )
-
+        st.subheader("Wearable Data Analysis")
+        data = pd.read_csv(wearable_csv)
+        st.dataframe(data.head(), use_container_width=True)
+        st.metric("Predicted Glucose Level", f"{glucose} mg/dL")
+        st.warning("Moderate glucose elevation detected.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with c2:
+    col1, col2 = st.columns(2)
 
+    with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        st.subheader("Diabetic Foot Assessment")
-
-        st.image(foot_file, use_container_width=True)
-
-        st.success(
-            "Foot tissue condition appears healthy with no visible ulcer indicators."
-        )
-
+        st.subheader("Foot Assessment")
+        st.image(Image.open(foot_img), caption="Uploaded Foot Image", width=350)
+        st.success("Low Risk: No ulcer detected")
         st.markdown('</div>', unsafe_allow_html=True)
 
+    with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
         st.subheader("Retinal Health Awareness")
-
-        st.warning(retina_note)
-
-        st.markdown("""
-        Continuous monitoring and routine ophthalmology screening are essential 
-        for preventing long-term diabetic retinal complications.
-        """)
-
+        st.warning("Patients with persistent glucose instability should schedule periodic retinal screening.")
+        st.write("This module supports long-term complication awareness and future retinal health integration.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # =========================
-        # PDF
-        # =========================
+    st.markdown("---")
 
-        st.markdown('<div class="pdf-box">', unsafe_allow_html=True)
+    report_col1, report_col2 = st.columns([2, 1])
 
-        st.subheader("Professional Clinical Report")
-
-        recommendation = f"{meal_note} {retina_note}"
-
-        pdf_bytes = create_pdf(
-            patient_name,
-            patient_id,
-            glucose,
-            carbs,
-            foot_risk,
-            recommendation
-        )
-
-        st.download_button(
-            "Download PDF Report",
-            data=pdf_bytes,
-            file_name="Glucovision_Report.pdf",
-            mime="application/pdf"
-        )
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # =========================
-        # HISTORY
-        # =========================
-
+    with report_col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        st.subheader("Recent Activity")
-
-        current_record = f"{datetime.now().strftime('%Y-%m-%d %H:%M')} - Analysis Generated"
-
-        if current_record not in st.session_state.history:
-            st.session_state.history.append(current_record)
-
-        for item in reversed(st.session_state.history[-5:]):
-            st.markdown(f"- {item}")
-
+        st.subheader("Integrated Risk Score")
+        st.progress(risk_score / 100)
+        st.write(f"Overall Risk Score: {risk_score}/100")
+        st.warning("Overall Risk Level: Moderate")
         st.markdown('</div>', unsafe_allow_html=True)
 
+    with report_col2:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Download Report")
+        pdf = create_pdf_report(st.session_state.patient, risk_score)
+        st.download_button(
+            label="Download PDF Report",
+            data=pdf,
+            file_name="Diabetes_Health_Report.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+
+if not st.session_state.logged_in:
+    login_page()
 else:
-
-    st.markdown("""
-    <div class="card">
-    <h3 style="color:white;">Start Patient Analysis</h3>
-
-    Upload:
-    <ul>
-    <li>Meal image</li>
-    <li>Wearable sensor CSV file</li>
-    <li>Diabetic foot image</li>
-    </ul>
-
-    to generate the integrated AI clinical monitoring dashboard.
-    </div>
-    """, unsafe_allow_html=True)
-
-# =========================
-# FOOTER
-# =========================
-
-st.markdown("""
-<div class="footer-note">
-Glucovision AI — Graduation Project Prototype | AI-Based Diabetic Monitoring System
-</div>
-""", unsafe_allow_html=True)
+    if st.session_state.page == "upload":
+        upload_page()
+    else:
+        dashboard_page()
