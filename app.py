@@ -234,12 +234,11 @@ def create_pdf_report(patient, risk_score):
 
 # --------------------------------------------------
 # Sidebar
-# --------------------------------------------------
-def render_sidebar():
+# --------------------------------------------------def render_sidebar():
     with st.sidebar:
         st.markdown(
             f"""
-            <div style="text-align:center; padding-top:18px; padding-bottom:22px;">
+            <div style="text-align:center; padding-top:18px; padding-bottom:28px;">
                 <img src="data:image/png;base64,{get_base64_logo()}" width="210">
             </div>
             """,
@@ -273,36 +272,11 @@ def render_sidebar():
                 "gear",
             ],
             default_index=0,
-            styles={
-                "container": {
-                    "padding": "0px",
-                    "background-color": "transparent",
-                },
-                "icon": {
-                    "color": "white",
-                    "font-size": "20px",
-                },
-                "nav-link": {
-                    "color": "white",
-                    "font-size": "16px",
-                    "font-weight": "600",
-                    "text-align": "left",
-                    "margin": "6px 0px",
-                    "padding": "12px 14px",
-                    "border-radius": "12px",
-                    "--hover-color": "rgba(255,255,255,0.10)",
-                },
-                "nav-link-selected": {
-                    "background": "linear-gradient(90deg, #0891b2, #14b8a6)",
-                    "color": "white",
-                    "font-weight": "700",
-                },
-            }
         )
 
         st.markdown("---")
 
-if st.button("⎋  Logout", use_container_width=True):
+        if st.button("⇦  Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.page = "login"
             st.session_state.auth_mode = "login"
