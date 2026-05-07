@@ -720,36 +720,51 @@ def dashboard_page():
 
     left, right = st.columns(2)
 
-    with left:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-heading">Dietary Analysis</div>', unsafe_allow_html=True)
+with left:
 
-        if food_img:
-            st.image(Image.open(food_img), use_container_width=True)
+    st.markdown(
+        '<div class="section-heading">Dietary Analysis</div>',
+        unsafe_allow_html=True
+    )
 
-        st.metric("Calories", f"{calories} kcal")
-        st.metric("Carbohydrates", f"{carbs} g")
-        st.metric("Protein", f"{protein} g")
-        st.metric("Fat", f"{fat} g")
+    if food_img:
+        st.image(Image.open(food_img), use_container_width=True)
 
-        st.markdown(
-            '<div class="recommendation">This meal is relatively high in carbohydrates. Consider reducing portion size or balancing it with protein and fiber.</div>',
-            unsafe_allow_html=True
-        )
+    c1, c2 = st.columns(2)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    c1.metric("Calories", f"{calories} kcal")
+    c1.metric("Protein", f"{protein} g")
 
-    with right:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-heading">Wearable Data Analysis</div>', unsafe_allow_html=True)
+    c2.metric("Carbohydrates", f"{carbs} g")
+    c2.metric("Fat", f"{fat} g")
 
-        if wearable_csv:
-            data = pd.read_csv(wearable_csv)
-            st.dataframe(data.head(), use_container_width=True)
+with right:
 
-        st.metric("Predicted Glucose Level", f"{glucose} mg/dL")
-        st.line_chart([120, 132, 145, 138, 149])
+    st.markdown(
+        '<div class="section-heading">Wearable Data Analysis</div>',
+        unsafe_allow_html=True
+    )
 
+    if wearable_csv:
+        data = pd.read_csv(wearable_csv)
+        st.dataframe(data.head(), use_container_width=True)
+
+    st.markdown(
+        f"""
+        <div style="margin-top:15px;">
+            <div style="font-size:15px; color:#475569;">
+                Predicted Glucose Level
+            </div>
+
+            <div style="font-size:48px; font-weight:800; color:#0B2F4A;">
+                {glucose} mg/dL
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.line_chart([120, 132, 145, 138, 149])
         st.markdown(
             '<div class="recommendation">Moderate glucose elevation detected.</div>',
             unsafe_allow_html=True
