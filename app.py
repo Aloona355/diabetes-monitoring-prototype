@@ -304,50 +304,52 @@ if "auth_mode" not in st.session_state:
 # --------------------------------------------------
 def render_sidebar():
     with st.sidebar:
-        # عرض اللوجو مع خاصية الدمج لإخفاء الخلفية البيضاء
+
         st.markdown(
             f"""
             <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
-                <img src="data:image/png;base64,{get_base64_logo()}" width="230" style="mix-blend-mode: multiply;">
+                <img src="data:image/png;base64,{get_base64_logo()}" width="230">
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # كود CSS إضافي لضمان شفافية الحاوية الخارجية
-        st.markdown("""
-            <style>
-                /* استهداف الحاوية التي تحمل المنيو لإزالة الظل والحدود الرمادية */
-                [data-testid="stSidebar"] div.nav-link {
-                    background-color: transparent !important;
-                }
-                div[data-testid="stVerticalBlock"] > div:has(div.nav-link) {
-                    background-color: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
         selected = option_menu(
             menu_title=None,
-            options=["Home", "Reports", "History", "Profile", "Settings", "Logout"],
-            icons=["house", "file-earmark-text", "clock-history", "person", "gear", "box-arrow-left"],
+
+            options=[
+                "Home",
+                "Reports",
+                "History",
+                "Profile",
+                "Settings",
+                "Logout"
+            ],
+
+            icons=[
+                "house",
+                "file-earmark-text",
+                "clock-history",
+                "person",
+                "gear",
+                "box-arrow-left"
+            ],
+
             default_index=0,
+
             styles={
                 "container": {
-                    "padding": "0!important",
-                    "background": "transparent !important",       # شفافية مطلقة للحاوية
-                    "background-color": "transparent !important", # التأكيد على إزالة اللون الرمادي
-                    "border": "none !important",                 # إزالة الحدود (البوكس الرمادي)
-                    "box-shadow": "none !important",             # إزالة أي ظل
+                    "padding": "0px",
+                    "background-color": "#06263d",
                 },
+
                 "icon": {
                     "color": "white",
                     "font-size": "20px",
                 },
+
                 "nav-link": {
-                    "background-color": "transparent",
+                    "background-color": "#06263d",
                     "color": "white",
                     "font-size": "16px",
                     "font-weight": "600",
@@ -355,12 +357,14 @@ def render_sidebar():
                     "margin": "0px",
                     "padding": "14px 18px",
                     "border-radius": "0px",
-                    "--hover-color": "rgba(255,255,255,0.08)", # تأثير خفيف عند تمرير الماوس
+                    "--hover-color": "rgba(255,255,255,0.08)",
                 },
+
                 "nav-link-selected": {
-                    "background": "rgba(255,255,255,0.05)",      # خلفية خفيفة جداً للعنصر المختار
+                    "background-color": "rgba(255,255,255,0.08)",
                     "color": "white",
-                    "border-left": "4px solid #22d3ee",          # الخط السماوي المميز
+                    "border-left": "4px solid #22d3ee",
+                    "font-weight": "700",
                 },
             }
         )
