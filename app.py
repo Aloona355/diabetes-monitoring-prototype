@@ -287,36 +287,57 @@ def render_sidebar():
         )
 
         selected = option_menu(
-            menu_title=None,
-            options=["Home"],
-            icons=["house"],
-            default_index=0,
-            styles={
-                "container": {
-                    "padding": "0px",
-                    "background-color": "transparent",
-                },
-                "icon": {
-                    "color": "white",
-                    "font-size": "22px",
-                },
-                "nav-link": {
-                    "color": "white",
-                    "font-size": "18px",
-                    "font-weight": "700",
-                    "text-align": "left",
-                    "margin": "8px 0px",
-                    "padding": "14px 18px",
-                    "border-radius": "14px",
-                    "--hover-color": "rgba(255,255,255,0.10)",
-                },
-                "nav-link-selected": {
-                    "background": "linear-gradient(90deg, #0891b2, #14b8a6)",
-                    "color": "white",
-                    "font-weight": "800",
-                },
-            }
-        )
+    menu_title=None,
+
+    options=[
+        "Home",
+        "Reports",
+        "History",
+        "Profile",
+        "Settings",
+        "Logout"
+    ],
+
+    icons=[
+        "house",
+        "file-earmark-text",
+        "clock-history",
+        "person",
+        "gear",
+        "box-arrow-left"
+    ],
+
+    default_index=0,
+
+    styles={
+        "container": {
+            "padding": "0!important",
+            "background-color": "transparent",
+        },
+
+        "icon": {
+            "color": "white",
+            "font-size": "20px",
+        },
+
+        "nav-link": {
+            "color": "white",
+            "font-size": "16px",
+            "font-weight": "600",
+            "text-align": "left",
+            "margin": "0px",
+            "padding": "14px 18px",
+            "border-radius": "0px",
+            "--hover-color": "rgba(255,255,255,0.08)",
+        },
+
+        "nav-link-selected": {
+            "background-color": "rgba(255,255,255,0.08)",
+            "color": "white",
+            "border-left": "4px solid #22d3ee",
+        },
+    }
+)
 
         st.markdown("<br><br><hr><br>", unsafe_allow_html=True)
 
