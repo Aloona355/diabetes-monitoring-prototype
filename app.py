@@ -304,7 +304,6 @@ if "auth_mode" not in st.session_state:
 # --------------------------------------------------
 def render_sidebar():
     with st.sidebar:
-
         st.markdown(
             f"""
             <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
@@ -316,38 +315,12 @@ def render_sidebar():
 
         selected = option_menu(
             menu_title=None,
-
-            options=[
-                "Home",
-                "Reports",
-                "History",
-                "Profile",
-                "Settings",
-                "Logout"
-            ],
-
-            icons=[
-                "house",
-                "file-earmark-text",
-                "clock-history",
-                "person",
-                "gear",
-                "box-arrow-left"
-            ],
-
+            options=["Home", "Reports", "History", "Profile", "Settings", "Logout"],
+            icons=["house", "file-earmark-text", "clock-history", "person", "gear", "box-arrow-left"],
             default_index=0,
-
             styles={
-                "container": {
-                    "padding": "0px",
-                    "background-color": "#06263d",
-                },
-
-                "icon": {
-                    "color": "white",
-                    "font-size": "20px",
-                },
-
+                "container": {"padding": "0px", "background-color": "#06263d"},
+                "icon": {"color": "white", "font-size": "20px"},
                 "nav-link": {
                     "background-color": "#06263d",
                     "color": "white",
@@ -359,7 +332,6 @@ def render_sidebar():
                     "border-radius": "0px",
                     "--hover-color": "rgba(255,255,255,0.08)",
                 },
-
                 "nav-link-selected": {
                     "background-color": "rgba(255,255,255,0.08)",
                     "color": "white",
@@ -376,11 +348,14 @@ def render_sidebar():
             st.rerun()
 
     return selected
+
+
 # --------------------------------------------------
 # Login / Create Account page
 # --------------------------------------------------
 def login_page():
     logo_left, logo_center, logo_right = st.columns([1, 1.4, 1])
+
     with logo_center:
         st.image(LOGO, width=430)
 
@@ -535,20 +510,37 @@ def upload_page():
 
     if food_img and wearable_csv and foot_img:
         if st.button("Generate Analysis", use_container_width=True):
-            st.session_state.page = "overview"
+            st.session_state.page = "dashboard"
             st.rerun()
     else:
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
+
+
 # --------------------------------------------------
-# Dashboard / Overview page
+# Dashboard / Analysis page
 # --------------------------------------------------
 def dashboard_page():
+    selected_page = render_sidebar()
+
     food_img = st.session_state.get("food_img")
     wearable_csv = st.session_state.get("wearable_csv")
     foot_img = st.session_state.get("foot_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
     glucose, risk_score, foot_risk = 145, 70, "Low"
+
+    if selected_page == "Reports":
+        reports_page(risk_score)
+        return
+    elif selected_page == "History":
+        history_page()
+        return
+    elif selected_page == "Profile":
+        profile_page()
+        return
+    elif selected_page == "Settings":
+        settings_page()
+        return
 
     st.markdown("""
     <style>
@@ -560,8 +552,8 @@ def dashboard_page():
     .dashboard-header {
         display: flex;
         align-items: center;
-        gap: 35px;
-        margin-bottom: 45px;
+        gap: 28px;
+        margin-bottom: 35px;
     }
 
     .dashboard-title {
@@ -572,7 +564,7 @@ def dashboard_page():
     }
 
     .dashboard-welcome {
-        font-size: 17px;
+        font-size: 18px;
         font-weight: 650;
         color: #0b2f4a;
     }
@@ -615,7 +607,7 @@ def dashboard_page():
     }
 
     .section-heading {
-        font-size: 32px;
+        font-size: 30px;
         font-weight: 850;
         color: #0b2f4a;
         margin-bottom: 18px;
@@ -635,10 +627,10 @@ def dashboard_page():
 
     st.markdown(f"""
     <div class="dashboard-header">
-        <img src="{LOGO}" width="80">
+        <img src="data:image/png;base64,{get_base64_logo()}" width="85">
         <div>
-            <div class="dashboard-title">Patient Analysis Dashboard</div>
-            <div class="dashboard-welcome">Welcome, {st.session_state.patient.get("name", "Patient")}</div>
+            <div class="dashboard-title">Your Health Analysis Summary</div>
+            <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -718,7 +710,7 @@ def dashboard_page():
         st.line_chart([120, 132, 145, 138, 149])
 
         st.markdown(
-            '<div class="recommendation">Moderate glucose elevation detected. Continue monitoring glucose trends after meals.</div>',
+            '<div class="recommendation">Moderate glucose elevation detected.</div>',
             unsafe_allow_html=True
         )
 
@@ -740,9 +732,59 @@ def dashboard_page():
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-heading">Retinal Health Awareness</div>', unsafe_allow_html=True)
 
-        st.warning("Glucose elevation may increase long-term retinal risk. A retinal check-up with a specialist is recommended.")
-        st.write("This module supports long-term complication awareness and routine screening reminders.")
+        if risk_score >= 70 or glucose >= 180:
+            st.warning(
+                "Your glucose pattern may indicate a higher retinal health risk. "
+                "Please schedule a retinal check-up with a specialist."
+            )
+        else:
+            st.success("No retinal risk warning is detected at this time.")
+
         st.markdown("</div>", unsafe_allow_html=True)
+
+
+# --------------------------------------------------
+# Sidebar Pages
+# --------------------------------------------------
+def reports_page(risk_score):
+    render_sidebar()
+    st.markdown('<div class="section-title">Reports</div>', unsafe_allow_html=True)
+    st.write("Download your health report in PDF format.")
+
+    pdf = create_pdf_report(st.session_state.patient, risk_score)
+
+    st.download_button(
+        label="Download PDF Report",
+        data=pdf,
+        file_name="Diabetes_Health_Report.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
+
+
+def history_page():
+    render_sidebar()
+    st.markdown('<div class="section-title">History</div>', unsafe_allow_html=True)
+    st.info("No previous analysis records are available yet.")
+
+
+def profile_page():
+    render_sidebar()
+    patient = st.session_state.patient
+
+    st.markdown('<div class="section-title">Profile</div>', unsafe_allow_html=True)
+    st.write(f"Name: {patient.get('name', 'Patient')}")
+    st.write(f"Email: {patient.get('email', 'N/A')}")
+    st.write(f"Age: {patient.get('age', 'N/A')}")
+    st.write(f"Gender: {patient.get('gender', 'N/A')}")
+    st.write(f"Diabetes Type: {patient.get('type', 'N/A')}")
+
+
+def settings_page():
+    render_sidebar()
+    st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
+    st.info("Settings can be expanded in future versions of this prototype.")
+
 
 # --------------------------------------------------
 # Routing
