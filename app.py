@@ -557,11 +557,11 @@ def upload_page():
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
 
 # --------------------------------------------------
-# Dashboard / Analysis page
+# Dashboard / Overview page
 # --------------------------------------------------
 def dashboard_page():
 
-    selected_page = render_sidebar()
+    selected_section = render_sidebar()
 
     food_img = st.session_state.get("food_img")
     wearable_csv = st.session_state.get("wearable_csv")
@@ -571,47 +571,25 @@ def dashboard_page():
     carbs = 65
     protein = 28
     fat = 18
-
     glucose = 145
-    risk_score = 70
-    foot_risk = "Low"
-
-    # Sidebar navigation
-    if selected_page == "Reports":
-        reports_page(risk_score)
-        return
-
-    elif selected_page == "History":
-        history_page()
-        return
-
-    elif selected_page == "Profile":
-        profile_page()
-        return
-
-    elif selected_page == "Settings":
-        settings_page()
-        return
+    risk_score = 46
 
     # Header
-    st.markdown(
-        f"""
-        <div class="dashboard-header">
+    top_left, top_right = st.columns([4, 1])
 
-            <div>
-                <div class="dashboard-title">
-                    Your Health Analysis Summary
-                </div>
+    with top_left:
+        st.markdown(
+            '<div class="section-title">Overview</div>',
+            unsafe_allow_html=True
+        )
 
-                <div class="dashboard-welcome">
-                    Hello, {st.session_state.patient.get("name", "Patient")}
-                </div>
-            </div>
+        st.write(
+            f"Welcome back, {st.session_state.patient.get('name', 'Patient')}"
+        )
 
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    with top_right:
+        st.write(datetime.now().strftime("%b %d, %Y"))
+        st.write(st.session_state.patient.get("name", "Patient"))
 
     st.markdown("---")
 
@@ -619,62 +597,54 @@ def dashboard_page():
     m1, m2, m3, m4 = st.columns(4)
 
     with m1:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Predicted Glucose</div>
-                <div class="metric-value">{glucose}</div>
-                <div class="metric-unit">mg/dL</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Estimated Glucose</div>
+            <div class="metric-value">{glucose}</div>
+            <div class="metric-note">Moderate</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with m2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Risk Score</div>
-                <div class="metric-value">{risk_score}</div>
-                <div class="metric-unit">/100</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Risk Score</div>
+            <div class="metric-value">{risk_score}</div>
+            <div class="metric-note">Moderate Risk</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     with m3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Foot Risk</div>
-                <div class="metric-value">{foot_risk}</div>
-                <div class="metric-unit">No ulcer detected</div>
+        st.markdown("""
+        <div class="metric-card">
+            <div class="metric-title">Foot Risk</div>
+            <div class="metric-value low-risk">Low</div>
+            <div class="metric-note" style="color:#64748b;">
+                No ulcer detected
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
     with m4:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Meal Carbs</div>
-                <div class="metric-value">{carbs}</div>
-                <div class="metric-unit">g</div>
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">Last Meal Carbs</div>
+            <div class="metric-value">{carbs} g</div>
+            <div class="metric-note" style="color:#64748b;">
+                Today
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Dietary + Wearable
-    left, right = st.columns(2)
+    # Dietary and wearable sections
+    left, right = st.columns([1, 1.45])
 
     with left:
 
         st.markdown(
-            '<div class="section-heading">Dietary Analysis</div>',
+            '<div class="card-title">Dietary Analysis</div>',
             unsafe_allow_html=True
         )
 
@@ -695,105 +665,96 @@ def dashboard_page():
     with right:
 
         st.markdown(
-            '<div class="section-heading">Wearable Data Analysis</div>',
+            '<div class="card-title">Wearable Data Analysis</div>',
             unsafe_allow_html=True
         )
 
         if wearable_csv:
-
             data = pd.read_csv(wearable_csv)
+            st.dataframe(data.head(), use_container_width=True)
 
-            st.dataframe(
-                data.head(),
-                use_container_width=True
-            )
-
-        st.markdown(
-            f"""
-            <div style="margin-top:15px;">
-
-                <div style="font-size:15px; color:#475569;">
-                    Predicted Glucose Level
-                </div>
-
-                <div style="
-                    font-size:48px;
-                    font-weight:800;
-                    color:#0B2F4A;
-                ">
-                    {glucose} mg/dL
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.metric(
+            "Predicted Glucose Level",
+            f"{glucose} mg/dL"
         )
 
         st.line_chart([120, 132, 145, 138, 149])
 
-        st.info("Moderate glucose elevation detected.")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Foot + Retinal
+    # Foot and retinal sections
     col1, col2 = st.columns(2)
 
     with col1:
 
         st.markdown(
-            '<div class="section-heading">Foot Assessment</div>',
+            '<div class="card-title">Foot Assessment</div>',
             unsafe_allow_html=True
         )
 
         if foot_img:
             st.image(
                 Image.open(foot_img),
-                width=350
+                use_container_width=True
             )
 
-        st.success(
-            "Low Risk: No ulcer indicators found."
-        )
+        st.success("Low Risk: No ulcer detected")
 
     with col2:
 
         st.markdown(
-            '<div class="section-heading">Retinal Health Awareness</div>',
+            '<div class="card-title">Retinal Health Awareness</div>',
             unsafe_allow_html=True
         )
 
         if risk_score >= 70 or glucose >= 180:
 
             st.warning(
-                "Your glucose pattern may indicate a higher retinal health risk. "
-                "Please schedule a retinal check-up with a specialist."
+                "Glucose elevation may increase long-term retinal risk. "
+                "A retinal check-up with a specialist is recommended."
             )
 
         else:
 
             st.success(
-                "No retinal risk warning is detected at this time."
+                "No retinal risk warning detected."
             )
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    # Risk and report sections
+    risk_col, report_col = st.columns([1.45, 1])
 
-    # Download report
+    with risk_col:
+
+        st.markdown(
+            '<div class="card-title">Integrated Risk Score</div>',
+            unsafe_allow_html=True
+        )
+
+        st.progress(risk_score / 100)
+
+        st.write(f"Overall Risk Score: {risk_score}/100")
+
+    with report_col:
+
+        st.markdown(
+            '<div class="card-title">Download Report</div>',
+            unsafe_allow_html=True
+        )
+
+        pdf = create_pdf_report(
+            st.session_state.patient,
+            risk_score
+        )
+
+        st.download_button(
+            label="Download PDF Report",
+            data=pdf,
+            file_name="Diabetes_Health_Report.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
     st.markdown(
-        '<div class="section-heading">Medical Report</div>',
+        '<div class="footer-note">This system is an academic prototype.</div>',
         unsafe_allow_html=True
-    )
-
-    pdf = create_pdf_report(
-        st.session_state.patient,
-        risk_score
-    )
-
-    st.download_button(
-        label="Download PDF Report",
-        data=pdf,
-        file_name="Diabetes_Health_Report.pdf",
-        mime="application/pdf",
-        use_container_width=True
     )
 # --------------------------------------------------
 # Sidebar Pages
