@@ -28,23 +28,45 @@ st.markdown("""
 }
 
 .block-container {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     padding-bottom: 2rem;
     max-width: 1200px;
 }
 
-/* Center all images, including the logo */
-[data-testid="stImage"] {
-    display: flex;
-    justify-content: center;
-}
-
-.logo-center {
+/* Main logo section */
+.logo-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
+.logo-wrapper img {
+    width: 430px !important;
+    max-width: 430px !important;
+}
+
+/* Main title */
+.hero-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: #075985;
+    text-align: center;
+    line-height: 1.2;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+/* Section titles */
+.section-title {
+    font-size: 26px;
+    font-weight: 750;
+    color: #075985;
+    margin-bottom: 18px;
+}
+
+/* Cards */
 .card {
     background: white;
     padding: 28px;
@@ -54,34 +76,14 @@ st.markdown("""
     margin-bottom: 22px;
 }
 
-.hero {
-    text-align: center;
-    padding: 35px 20px 10px 20px;
-}
-
-.hero-title {
-    font-size: 46px;
-    font-weight: 800;
-    color: #075985;
-    margin-top: 18px;
-    text-align: center;
-}
-
-.section-title {
-    font-size: 26px;
-    font-weight: 750;
-    color: #075985;
-    margin-bottom: 18px;
-}
-
-/* Make form labels clear and readable */
-label, .stTextInput label, .stNumberInput label, .stSelectbox label {
+/* Make form labels clear */
+label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
     color: #0B2F4A !important;
     font-weight: 700 !important;
     font-size: 15px !important;
 }
 
-/* Improve input fields readability */
+/* Input fields */
 .stTextInput input,
 .stNumberInput input {
     background-color: #ffffff !important;
@@ -90,7 +92,7 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     border-radius: 12px !important;
 }
 
-/* Improve selectbox readability */
+/* Selectbox */
 .stSelectbox div[data-baseweb="select"] {
     background-color: #ffffff !important;
     color: #0B2F4A !important;
@@ -98,16 +100,16 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     border-radius: 12px !important;
 }
 
-/* Selectbox text color */
 .stSelectbox div[data-baseweb="select"] span {
     color: #0B2F4A !important;
 }
 
-/* Placeholder color */
+/* Placeholder */
 .stTextInput input::placeholder {
     color: #64748b !important;
 }
 
+/* Metric cards */
 .metric-card {
     background: white;
     padding: 24px;
@@ -129,6 +131,7 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     font-weight: 800;
 }
 
+/* Buttons */
 .stButton > button {
     background: linear-gradient(90deg, #0369a1, #0f766e);
     color: white;
@@ -143,8 +146,26 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     color: white;
 }
 
+/* Sidebar */
 [data-testid="stSidebar"] {
     background: #e6f4f6;
+}
+
+/* Sidebar radio style */
+[data-testid="stSidebar"] label {
+    color: #0B2F4A !important;
+}
+
+/* Mobile-friendly title and logo */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 38px;
+    }
+
+    .logo-wrapper img {
+        width: 360px !important;
+        max-width: 360px !important;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -179,7 +200,7 @@ def create_pdf_report(patient, risk_score):
     data = {
         "Generated on": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Name": patient.get("name", "N/A"),
-        "Patient ID": patient.get("id", "N/A"),
+        "Email Address": patient.get("email", "N/A"),
         "Age": patient.get("age", "N/A"),
         "Gender": patient.get("gender", "N/A"),
         "Diabetes Type": patient.get("type", "N/A"),
@@ -239,34 +260,48 @@ def render_sidebar():
 
 
 # --------------------------------------------------
-# Login page
+# Login / Create Account page
 # --------------------------------------------------
 def login_page():
-    st.markdown('<div class="hero">', unsafe_allow_html=True)
-
-    # Centered large logo
-    st.markdown('<div class="logo-center">', unsafe_allow_html=True)
-    st.image(LOGO, width=360)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Centered logo using HTML to force alignment and size
+    st.markdown(
+        f"""
+        <div class="logo-wrapper">
+            <img src="app/static/{LOGO}">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         '<div class="hero-title">Intelligent Diabetes Monitoring System</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Patient form without white card background
     left, center, right = st.columns([1, 1.2, 1])
 
     with center:
-        st.markdown(
-            '<div class="section-title" style="text-align:center;">Patient Information</div>',
-            unsafe_allow_html=True
+        # User chooses whether to login or create account first
+        account_mode = st.radio(
+            "Account Access",
+            ["Login", "Create Account"],
+            horizontal=True
         )
 
+        if account_mode == "Login":
+            st.markdown(
+                '<div class="section-title" style="text-align:center;">Login to Your Account</div>',
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                '<div class="section-title" style="text-align:center;">Create Your Account</div>',
+                unsafe_allow_html=True
+            )
+
+        # Patient account information
         name = st.text_input("Full Name")
-        patient_id = st.text_input("Patient ID")
+        email = st.text_input("Email Address")
         age = st.number_input("Age", min_value=1, max_value=100, value=23)
         gender = st.selectbox("Gender", ["Female", "Male"])
         diabetes_type = st.selectbox(
@@ -274,17 +309,27 @@ def login_page():
             ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"]
         )
 
-        if st.button("Continue to Data Upload", use_container_width=True):
+        button_text = (
+            "Login and Continue"
+            if account_mode == "Login"
+            else "Create Account and Continue"
+        )
+
+        if st.button(button_text, use_container_width=True):
             if name.strip() == "":
                 st.error("Enter your name to continue.")
+            elif email.strip() == "":
+                st.error("Enter your email address to continue.")
             else:
                 st.session_state.patient = {
                     "name": name,
-                    "id": patient_id,
+                    "email": email,
                     "age": age,
                     "gender": gender,
-                    "type": diabetes_type
+                    "type": diabetes_type,
+                    "account_mode": account_mode
                 }
+
                 st.session_state.logged_in = True
                 st.session_state.page = "upload"
                 st.rerun()
@@ -297,6 +342,7 @@ def upload_page():
     st.sidebar.image(LOGO, width=120)
     st.sidebar.markdown("### Patient Profile")
     st.sidebar.write(f"Name: {st.session_state.patient.get('name')}")
+    st.sidebar.write(f"Email: {st.session_state.patient.get('email')}")
     st.sidebar.write(f"Age: {st.session_state.patient.get('age')}")
     st.sidebar.write(f"Type: {st.session_state.patient.get('type')}")
 
