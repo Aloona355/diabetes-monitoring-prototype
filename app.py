@@ -747,7 +747,6 @@ def dashboard_page():
 # Sidebar Pages
 # --------------------------------------------------
 def reports_page(risk_score):
-    render_sidebar()
     st.markdown('<div class="section-title">Reports</div>', unsafe_allow_html=True)
     st.write("Download your health report in PDF format.")
 
@@ -763,13 +762,11 @@ def reports_page(risk_score):
 
 
 def history_page():
-    render_sidebar()
     st.markdown('<div class="section-title">History</div>', unsafe_allow_html=True)
     st.info("No previous analysis records are available yet.")
 
 
 def profile_page():
-    render_sidebar()
     patient = st.session_state.patient
 
     st.markdown('<div class="section-title">Profile</div>', unsafe_allow_html=True)
@@ -781,10 +778,8 @@ def profile_page():
 
 
 def settings_page():
-    render_sidebar()
     st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
     st.info("Settings can be expanded in future versions of this prototype.")
-
 
 # --------------------------------------------------
 # Routing
