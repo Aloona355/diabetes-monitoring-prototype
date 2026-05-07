@@ -1,408 +1,291 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
+from fpdf import FPDF
 from datetime import datetime
 
 st.set_page_config(
     page_title="AI Diabetes Monitor",
-    page_icon="logo",
     layout="wide"
 )
-
-# =========================
-# Styling
-# =========================
 
 st.markdown("""
 <style>
     .stApp {
-        background-color: #f7fbfc;
-        color: #0b2f4a;
+        background-color: #f8fafc;
     }
 
     [data-testid="stSidebar"] {
-        background-color: #e9f4f6;
-    }
-
-    h1, h2, h3 {
-        color: #0b5f8a;
+        background-color: #ffffff;
+        border-right: 1px solid #e2e8f0;
     }
 
     .main-title {
-        font-size: 42px;
+        font-size: 34px;
         font-weight: 800;
-        color: #0b5f8a;
-        margin-bottom: 0px;
+        color: #006b8f;
+        text-align: center;
     }
 
-    .subtitle {
-        font-size: 20px;
+    .sub-title {
+        font-size: 16px;
         color: #188f9d;
-        margin-top: 0px;
+        text-align: center;
+        margin-bottom: 25px;
     }
 
     .card {
         background-color: white;
-        padding: 22px;
-        border-radius: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.08);
-        border-left: 6px solid #188f9d;
-        margin-bottom: 18px;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        border: 1px solid #e2e8f0;
     }
 
-    .metric-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        text-align: center;
-    }
-
-    .risk-low {
-        background-color: #e8f7ef;
-        color: #0b6b3a;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: 700;
-    }
-
-    .risk-medium {
-        background-color: #fff7df;
-        color: #9a6a00;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: 700;
-    }
-
-    .risk-high {
-        background-color: #fdecec;
-        color: #b42318;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: 700;
-    }
-
-    .footer {
-        text-align: center;
-        color: #6b7280;
-        font-size: 13px;
-        margin-top: 40px;
+    .stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: 600;
+        background-color: #006b8f;
+        color: white;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# =========================
-# Login Page
-# =========================
-
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if "patient_name" not in st.session_state:
-    st.session_state.patient_name = ""
+if "active_page" not in st.session_state:
+    st.session_state.active_page = "Dashboard"
 
-if "patient_age" not in st.session_state:
-    st.session_state.patient_age = 45
+if "user" not in st.session_state:
+    st.session_state.user = {}
 
-if "diabetes_type" not in st.session_state:
-    st.session_state.diabetes_type = "Type 2 Diabetes"
+
+def create_pdf(data):
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, "Patient Health Report", ln=True, align="C")
+
+    pdf.ln(10)
+    pdf.set_font("Arial", size=12)
+
+    for key, value in data.items():
+        pdf.cell(200, 10, f"{key}: {value}", ln=True)
+
+    return pdf.output(dest="S").encode("latin-1")
 
 
 def login_page():
-    col1, col2 = st.columns([1, 3])
+    left, center, right = st.columns([1, 1.5, 1])
 
-    with col1:
-        st.image("PHOTO-2026-02-17-21-43-19.jpeg", width=170)
+    with center:
+        st.image("PHOTO-2026-02-17-21-43-19.jpeg", width=150)
 
-    with col2:
-        st.markdown('<div class="main-title">Intelligent Diabetes Monitoring System</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="subtitle">Multimodal AI Prototype for Diabetes Monitoring and Risk Awareness</div>',
+            '<div class="main-title">Intelligent Diabetes Monitoring System</div>',
             unsafe_allow_html=True
         )
 
-    st.markdown("---")
+        st.markdown(
+            '<div class="sub-title">Multimodal AI Prototype for Diabetes Monitoring</div>',
+            unsafe_allow_html=True
+        )
 
-    left, center, right = st.columns([1, 2, 1])
-
-    with center:
         st.markdown('<div class="card">', unsafe_allow_html=True)
 
         st.subheader("Patient Login")
 
-        patient_name = st.text_input("Patient Name", placeholder="Enter patient name")
-        patient_id = st.text_input("Patient ID", placeholder="Enter patient ID")
-        patient_age = st.number_input("Age", min_value=1, max_value=100, value=45)
+        name = st.text_input("Full Name")
+        patient_id = st.text_input("Patient ID")
+        age = st.number_input("Age", min_value=1, max_value=100, value=45)
         gender = st.selectbox("Gender", ["Female", "Male"])
-        diabetes_type = st.selectbox("Diabetes Type", ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"])
+        diabetes_type = st.selectbox(
+            "Diabetes Type",
+            ["Type 1", "Type 2", "Prediabetes"]
+        )
 
-        start = st.button("Start Monitoring", use_container_width=True)
+        if st.button("Start Monitoring"):
+            if name.strip() == "" or patient_id.strip() == "":
+                st.error("Please enter patient name and ID.")
+            else:
+                st.session_state.logged_in = True
+                st.session_state.user = {
+                    "name": name,
+                    "id": patient_id,
+                    "age": age,
+                    "gender": gender,
+                    "type": diabetes_type
+                }
+                st.session_state.active_page = "Dashboard"
+                st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-        if start:
-            if patient_name.strip() == "":
-                st.error("Please enter patient name.")
-            else:
-                st.session_state.logged_in = True
-                st.session_state.patient_name = patient_name
-                st.session_state.patient_id = patient_id
-                st.session_state.patient_age = patient_age
-                st.session_state.gender = gender
-                st.session_state.diabetes_type = diabetes_type
-                st.rerun()
-
-
-# =========================
-# Dashboard Page
-# =========================
 
 def dashboard_page():
-
-    # Header
-    col1, col2, col3 = st.columns([1, 5, 1])
-
-    with col1:
+    with st.sidebar:
         st.image("PHOTO-2026-02-17-21-43-19.jpeg", width=110)
 
-    with col2:
-        st.markdown('<div class="main-title">Intelligent Diabetes Monitoring System</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="subtitle">Integrated Multimodal AI Dashboard</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown("### Patient Profile")
+        st.write(f"Name: {st.session_state.user['name']}")
+        st.write(f"ID: {st.session_state.user['id']}")
+        st.write(f"Age: {st.session_state.user['age']}")
+        st.write(f"Type: {st.session_state.user['type']}")
 
-    with col3:
+        st.markdown("---")
+
+        if st.button("Dashboard Home"):
+            st.session_state.active_page = "Dashboard"
+
+        if st.button("Dietary Analysis"):
+            st.session_state.active_page = "Diet"
+
+        if st.button("Glucose Prediction"):
+            st.session_state.active_page = "Glucose"
+
+        if st.button("Foot Assessment"):
+            st.session_state.active_page = "Foot"
+
+        if st.button("Report"):
+            st.session_state.active_page = "Report"
+
+        st.markdown("---")
+
         if st.button("Logout"):
             st.session_state.logged_in = False
             st.rerun()
 
-    st.markdown("---")
-
-    # Sidebar
-    st.sidebar.image("PHOTO-2026-02-17-21-43-19.jpeg", width=120)
-    st.sidebar.title("Patient Data Input")
-
-    st.sidebar.markdown("### Patient Profile")
-    st.sidebar.write(f"Name: {st.session_state.patient_name}")
-    st.sidebar.write(f"Age: {st.session_state.patient_age}")
-    st.sidebar.write(f"Type: {st.session_state.diabetes_type}")
-
-    st.sidebar.markdown("---")
-
-    food_img = st.sidebar.file_uploader("Upload Food Image", type=["jpg", "jpeg", "png"])
-    wearable_csv = st.sidebar.file_uploader("Upload Wearable Data CSV", type=["csv"])
-    foot_img = st.sidebar.file_uploader("Upload Foot Image", type=["jpg", "jpeg", "png"])
-
-    # Default values
-    calories = 0
-    carbs = 0
-    protein = 0
-    fat = 0
-    predicted_glucose = 0
-    foot_risk = "Not assessed"
-
-    # Food analysis
-    if food_img:
-        calories = 550
-        carbs = 65
-        protein = 28
-        fat = 18
-
-    # Wearable analysis
-    if wearable_csv:
-        predicted_glucose = 145
-
-    # Foot assessment
-    if foot_img:
-        foot_risk = "Low"
-
-    # Metrics
-    m1, m2, m3 = st.columns(3)
-
-    with m1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3>Meal Carbohydrates</h3>
-            <h1>{carbs} g</h1>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with m2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3>Predicted Glucose</h3>
-            <h1>{predicted_glucose} mg/dL</h1>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with m3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <h3>Foot Risk</h3>
-            <h1>{foot_risk}</h1>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    left, right = st.columns(2)
-
-    with left:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Dietary Analysis Module")
-
-        if food_img:
-            image = Image.open(food_img)
-            st.image(image, caption="Uploaded Food Image", use_container_width=True)
-
-            st.success("Food analysis completed")
-
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Calories", f"{calories} kcal")
-            c2.metric("Carbs", f"{carbs} g")
-            c3.metric("Protein", f"{protein} g")
-            c4.metric("Fat", f"{fat} g")
-
-            st.caption("Prototype output: simulated AI-based nutrition estimation.")
-        else:
-            st.info("Upload a food image to estimate nutrition values.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with right:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Wearable-Based Glucose Estimation")
-
-        if wearable_csv:
-            data = pd.read_csv(wearable_csv)
-            st.dataframe(data.head(), use_container_width=True)
-
-            st.metric("Predicted Glucose Level", f"{predicted_glucose} mg/dL")
-
-            if predicted_glucose > 180:
-                st.error("High glucose pattern detected.")
-            elif predicted_glucose > 140:
-                st.warning("Moderate glucose elevation detected.")
-            else:
-                st.success("Glucose level appears normal.")
-
-            st.caption("Prototype output: simulated XGBoost glucose prediction.")
-        else:
-            st.info("Upload wearable CSV data to estimate glucose level.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    col4, col5 = st.columns(2)
-
-    with col4:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Diabetic Foot Assessment Module")
-
-        if foot_img:
-            foot_image = Image.open(foot_img)
-            st.image(foot_image, caption="Uploaded Foot Image", width=350)
-
-            st.success("AI Classification: No ulcer detected.")
-            st.caption("Prototype output: simulated EfficientNet-based foot assessment.")
-        else:
-            st.info("Upload a foot image for diabetic foot assessment.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col5:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Retinal Health Awareness")
-
-        st.warning(
-            "Patients with persistent glucose instability should schedule periodic retinal screening."
-        )
-
-        st.write(
-            "This module supports long-term complication awareness and future retinal health integration."
-        )
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Risk score
-    st.markdown("---")
-    st.subheader("Integrated Risk Score")
-
-    risk_score = 0
-
-    if food_img:
-        risk_score += 25
-        if carbs > 60:
-            risk_score += 15
-
-    if wearable_csv:
-        risk_score += 25
-        if predicted_glucose > 140:
-            risk_score += 20
-
-    if foot_img:
-        risk_score += 10
-
-    risk_score = min(risk_score, 100)
-
-    st.progress(risk_score / 100)
-    st.write(f"Overall Risk Score: {risk_score}/100")
-
-    if risk_score >= 70:
-        st.markdown('<div class="risk-high">Overall Risk Level: High</div>', unsafe_allow_html=True)
-    elif risk_score >= 40:
-        st.markdown('<div class="risk-medium">Overall Risk Level: Moderate</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="risk-low">Overall Risk Level: Low</div>', unsafe_allow_html=True)
-
-    # Report
-    st.markdown("---")
-    st.subheader("Health Report")
-
-    report = f"""
-Intelligent Diabetes Monitoring System Report
-Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M")}
-
-Patient Information:
-Name: {st.session_state.patient_name}
-Patient ID: {st.session_state.patient_id}
-Age: {st.session_state.patient_age}
-Gender: {st.session_state.gender}
-Diabetes Type: {st.session_state.diabetes_type}
-
-Dietary Analysis:
-Calories: {calories} kcal
-Carbohydrates: {carbs} g
-Protein: {protein} g
-Fat: {fat} g
-
-Wearable-Based Glucose Estimation:
-Predicted Glucose Level: {predicted_glucose} mg/dL
-
-Diabetic Foot Assessment:
-Foot Risk: {foot_risk}
-
-Retinal Health Awareness:
-Periodic retinal screening is recommended for long-term complication monitoring.
-
-Integrated Risk Score:
-{risk_score}/100
-
-System Note:
-This prototype is for academic demonstration only and is not intended for clinical diagnosis.
-"""
-
-    st.download_button(
-        label="Download Health Report",
-        data=report,
-        file_name="diabetes_health_report.txt",
-        mime="text/plain"
+    st.markdown(
+        '<div class="main-title">AI Diabetes Monitoring Dashboard</div>',
+        unsafe_allow_html=True
     )
 
     st.markdown(
-        '<div class="footer">Graduation Project Prototype | AI-based Multimodal Diabetes Monitoring System</div>',
+        '<div class="sub-title">Integrated Dietary, Wearable, Foot, and Retinal Health Monitoring</div>',
         unsafe_allow_html=True
+    )
+
+    st.markdown("---")
+
+    if st.session_state.active_page == "Dashboard":
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("Predicted Glucose", "145 mg/dL")
+        col2.metric("Risk Score", "65 / 100")
+        col3.metric("Foot Risk", "Low")
+
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("System Overview")
+        st.write(
+            "This prototype integrates dietary analysis, wearable-based glucose prediction, "
+            "diabetic foot assessment, and retinal health awareness in a unified dashboard."
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif st.session_state.active_page == "Diet":
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Dietary Analysis Module")
+
+        uploaded_food = st.file_uploader(
+            "Upload Meal Image",
+            type=["jpg", "jpeg", "png"]
+        )
+
+        if uploaded_food:
+            image = Image.open(uploaded_food)
+            st.image(image, caption="Uploaded Meal", width=450)
+
+            st.success("AI Nutrition Estimation Completed")
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Calories", "550 kcal")
+            c2.metric("Carbohydrates", "65 g")
+            c3.metric("Protein", "28 g")
+            c4.metric("Fat", "18 g")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif st.session_state.active_page == "Glucose":
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Wearable-Based Glucose Prediction")
+
+        uploaded_csv = st.file_uploader(
+            "Upload Wearable Sensor Data CSV",
+            type=["csv"]
+        )
+
+        if uploaded_csv:
+            data = pd.read_csv(uploaded_csv)
+            st.dataframe(data.head(), use_container_width=True)
+
+            st.line_chart([120, 132, 145, 138, 130])
+            st.metric("Predicted Glucose", "145 mg/dL")
+            st.warning("Moderate glucose elevation detected.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif st.session_state.active_page == "Foot":
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Diabetic Foot Assessment")
+
+        uploaded_foot = st.file_uploader(
+            "Upload Foot Image",
+            type=["jpg", "jpeg", "png"]
+        )
+
+        if uploaded_foot:
+            image = Image.open(uploaded_foot)
+            st.image(image, caption="Uploaded Foot Image", width=420)
+
+            st.success("AI Result: Healthy tissue - No ulcer detected")
+            st.metric("Foot Risk", "Low")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Retinal Health Awareness")
+        st.warning(
+            "Patients with persistent glucose instability should schedule periodic retinal screening."
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif st.session_state.active_page == "Report":
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.subheader("Generate Patient PDF Report")
+
+        report_data = {
+            "Patient Name": st.session_state.user["name"],
+            "Patient ID": st.session_state.user["id"],
+            "Age": st.session_state.user["age"],
+            "Gender": st.session_state.user["gender"],
+            "Diabetes Type": st.session_state.user["type"],
+            "Predicted Glucose": "145 mg/dL",
+            "Dietary Carbohydrates": "65 g",
+            "Foot Risk": "Low",
+            "Risk Score": "65 / 100",
+            "Report Date": datetime.now().strftime("%Y-%m-%d"),
+            "System Status": "Academic Prototype"
+        }
+
+        pdf_bytes = create_pdf(report_data)
+
+        st.download_button(
+            label="Download PDF Report",
+            data=pdf_bytes,
+            file_name="Diabetes_Health_Report.pdf",
+            mime="application/pdf"
+        )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.caption(
+        "Graduation Project Prototype | Intelligent Diabetes Monitoring System"
     )
 
 
