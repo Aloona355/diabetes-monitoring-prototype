@@ -539,7 +539,7 @@ def overview_page():
     top_left, top_right = st.columns([4, 1])
 
     with top_left:
-        st.markdown('<div class="section-title">Overview</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Home</div>', unsafe_allow_html=True)
         st.write(f"Welcome back, {st.session_state.patient.get('name', 'Patient')}")
 
     with top_right:
