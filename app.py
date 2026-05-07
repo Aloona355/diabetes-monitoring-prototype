@@ -252,6 +252,26 @@ label {
         font-size: 36px;
     }
 }
+
+/* Remove sidebar option menu box */
+[data-testid="stSidebar"] ul {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stSidebar"] li {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+[data-testid="stSidebar"] .nav {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -335,7 +355,7 @@ styles={
 }
 )
 
-        st.markdown("<br><br><hr><br>", unsafe_allow_html=True)
+
 
   
 
