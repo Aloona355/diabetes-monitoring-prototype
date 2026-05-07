@@ -461,46 +461,82 @@ def login_page():
 # Upload page
 # --------------------------------------------------
 def upload_page():
-    render_sidebar()
 
-    st.markdown('<div class="section-title">Upload Health Data</div>', unsafe_allow_html=True)
-    st.write("Upload your health files to generate the diabetes monitoring summary.")
+    selected = render_sidebar()
+
+    st.markdown(
+        f"""
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:10px;">
+            <div>
+                <div class="section-title">Upload Health Data</div>
+                <div style="color:#475569; font-size:16px;">
+                    Upload your health files to generate the diabetes monitoring summary.
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3, gap="large")
+    col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Meal Image</div>', unsafe_allow_html=True)
-        st.write("Upload a clear meal image for nutrition analysis.")
+
+        st.markdown("""
+        <div class="card-title">Meal Image</div>
+        <div style="color:#475569; margin-bottom:15px;">
+            Upload a clear meal image for nutrition analysis.
+        </div>
+        """, unsafe_allow_html=True)
+
         food_img = st.file_uploader(
-            "Meal Image",
+            "",
             type=["jpg", "jpeg", "png"],
-            label_visibility="collapsed"
+            key="food_upload",
+            label_visibility="hidden"
         )
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Wearable Device Data</div>', unsafe_allow_html=True)
-        st.write("Upload wearable data in CSV format.")
+
+        st.markdown("""
+        <div class="card-title">Wearable Device Data</div>
+        <div style="color:#475569; margin-bottom:15px;">
+            Upload wearable data in CSV format.
+        </div>
+        """, unsafe_allow_html=True)
+
         wearable_csv = st.file_uploader(
-            "Wearable CSV",
+            "",
             type=["csv"],
-            label_visibility="collapsed"
+            key="wearable_upload",
+            label_visibility="hidden"
         )
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Foot Assessment Image</div>', unsafe_allow_html=True)
-        st.write("Upload a clear foot image for risk assessment.")
+
+        st.markdown("""
+        <div class="card-title">Foot Assessment Image</div>
+        <div style="color:#475569; margin-bottom:15px;">
+            Upload a clear foot image for risk assessment.
+        </div>
+        """, unsafe_allow_html=True)
+
         foot_img = st.file_uploader(
-            "Foot Image",
+            "",
             type=["jpg", "jpeg", "png"],
-            label_visibility="collapsed"
+            key="foot_upload",
+            label_visibility="hidden"
         )
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.session_state.food_img = food_img
@@ -510,12 +546,15 @@ def upload_page():
     st.markdown("<br>", unsafe_allow_html=True)
 
     if food_img and wearable_csv and foot_img:
-        if st.button("Generate Analysis", use_container_width=True):
+
+        st.success("All files uploaded successfully.")
+
+        if st.button("Start AI Analysis", use_container_width=True):
             st.session_state.page = "dashboard"
             st.rerun()
+
     else:
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
-
 
 # --------------------------------------------------
 # Dashboard / Analysis page
@@ -627,13 +666,14 @@ def dashboard_page():
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
-    <div class="dashboard-header">
-        <img src="data:image/png;base64,{get_base64_logo()}" width="85">
-        <div>
-            <div class="dashboard-title">Your Health Analysis Summary</div>
-            <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>
+   <div class="dashboard-header">
+    <div>
+        <div class="dashboard-title">Your Health Analysis Summary</div>
+        <div class="dashboard-welcome">
+            Hello, {st.session_state.patient.get("name", "Patient")}
         </div>
     </div>
+</div>
     """, unsafe_allow_html=True)
 
     st.markdown("---")
