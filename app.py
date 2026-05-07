@@ -304,7 +304,7 @@ if "auth_mode" not in st.session_state:
 # --------------------------------------------------
 def render_sidebar():
     with st.sidebar:
-        # إزالة الخلفية البيضاء من اللوجو ودمجه مع الكحلي
+        # عرض اللوجو مع خاصية الدمج لإخفاء الخلفية البيضاء
         st.markdown(
             f"""
             <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
@@ -314,18 +314,17 @@ def render_sidebar():
             unsafe_allow_html=True
         )
 
-        # كود CSS جبار لإخفاء البوكس الرمادي نهائياً
+        # كود CSS إضافي لضمان شفافية الحاوية الخارجية
         st.markdown("""
             <style>
-                /* استهداف الحاوية الخارجية للمنيو وإزالة الحدود والظلال */
-                div[data-testid="stVerticalBlock"] div[style*="flex-direction: column"] > div {
+                /* استهداف الحاوية التي تحمل المنيو لإزالة الظل والحدود الرمادية */
+                [data-testid="stSidebar"] div.nav-link {
+                    background-color: transparent !important;
+                }
+                div[data-testid="stVerticalBlock"] > div:has(div.nav-link) {
                     background-color: transparent !important;
                     border: none !important;
                     box-shadow: none !important;
-                }
-                /* التأكد من أن المنيو نفسه شفاف */
-                .nav-link {
-                    background-color: transparent !important;
                 }
             </style>
         """, unsafe_allow_html=True)
@@ -338,9 +337,10 @@ def render_sidebar():
             styles={
                 "container": {
                     "padding": "0!important",
-                    "background-color": "transparent!important", # شفافية مطلقة
-                    "border": "none!important",                # إلغاء الحدود تماماً
-                    "box-shadow": "none!important",
+                    "background": "transparent !important",       # شفافية مطلقة للحاوية
+                    "background-color": "transparent !important", # التأكيد على إزالة اللون الرمادي
+                    "border": "none !important",                 # إزالة الحدود (البوكس الرمادي)
+                    "box-shadow": "none !important",             # إزالة أي ظل
                 },
                 "icon": {
                     "color": "white",
@@ -355,11 +355,12 @@ def render_sidebar():
                     "margin": "0px",
                     "padding": "14px 18px",
                     "border-radius": "0px",
+                    "--hover-color": "rgba(255,255,255,0.08)", # تأثير خفيف عند تمرير الماوس
                 },
                 "nav-link-selected": {
-                    "background-color": "rgba(255,255,255,0.08)", # ظل خفيف جداً للاختيار الحالي
+                    "background": "rgba(255,255,255,0.05)",      # خلفية خفيفة جداً للعنصر المختار
                     "color": "white",
-                    "border-left": "4px solid #22d3ee",         # الخط السماوي المميز
+                    "border-left": "4px solid #22d3ee",          # الخط السماوي المميز
                 },
             }
         )
