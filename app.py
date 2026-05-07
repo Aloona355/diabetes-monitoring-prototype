@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-LOGO = "Logo.png"
+LOGO = "IMG_5991.png"
 
 # =========================
 # PREMIUM UI STYLE
