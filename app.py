@@ -619,17 +619,33 @@ def dashboard_page():
     st.markdown("---")
 
     # 6. الأقسام التفصيلية (Dietary & Wearable)
-    left, right = st.columns(2)
-    with left:
-        st.markdown('<div class="section-card"><div class="section-heading">Dietary Analysis</div>', unsafe_allow_html=True)
-        if food_img:
-            st.image(Image.open(food_img), use_container_width=True)
-        st.metric("Calories", f"{calories} kcal")
-        st.metric("Carbohydrates", f"{carbs} g")
-        st.markdown('<div class="recommendation">This meal is high in carbs. Consider balancing it with fiber.</div></div>', unsafe_allow_html=True)
+  # 6. الأقسام التفصيلية (Dietary & Wearable)
+left, right = st.columns(2)
 
-   with right:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+with left:
+    st.markdown(
+        '<div class="section-card"><div class="section-heading">Dietary Analysis</div>',
+        unsafe_allow_html=True
+    )
+
+    if food_img:
+        st.image(Image.open(food_img), use_container_width=True)
+
+    st.metric("Calories", f"{calories} kcal")
+    st.metric("Carbohydrates", f"{carbs} g")
+
+    st.markdown(
+        '<div class="recommendation">This meal is high in carbs. Consider balancing it with fiber.</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with right:
+    st.markdown(
+        '<div class="section-card">',
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         '<div class="section-heading">Wearable Data Analysis</div>',
@@ -651,6 +667,7 @@ def dashboard_page():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
+st.markdown("---")
     # 7. التقييمات الإضافية (Foot & Retina)
     col1, col2 = st.columns(2)
     with col1:
