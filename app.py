@@ -557,20 +557,19 @@ def upload_page():
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
 
 # --------------------------------------------------
+# --------------------------------------------------
 # Dashboard / Overview page
 # --------------------------------------------------
 def dashboard_page():
-    # 1. جلب البيانات والصفحة المختارة
     selected_page = render_sidebar()
+
     food_img = st.session_state.get("food_img")
     wearable_csv = st.session_state.get("wearable_csv")
     foot_img = st.session_state.get("foot_img")
 
-    # بيانات المحاكاة
     calories, carbs, protein, fat = 550, 65, 28, 18
     glucose, risk_score, foot_risk = 145, 70, "Low"
 
-    # 2. توجيه الصفحات الجانبية
     if selected_page == "Reports":
         reports_page(risk_score)
         return
@@ -584,120 +583,232 @@ def dashboard_page():
         settings_page()
         return
 
-    # 3. الستايل (يجب أن يكون داخل الدالة ليعمل عند استدعائها)
     st.markdown("""
     <style>
-    .block-container { max-width: 1180px; padding-top: 2rem; }
-    .dashboard-title { font-size: 34px; font-weight: 850; color: #0b2f4a; margin-bottom: 8px; }
-    .dashboard-welcome { font-size: 18px; font-weight: 650; color: #0b2f4a; }
-    .metric-card { background: #ffffff; border-radius: 22px; padding: 32px 20px; text-align: center; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08); min-height: 170px; color: #0b2f4a; }
-    .metric-title { font-size: 16px; font-weight: 800; margin-bottom: 18px; }
-    .metric-value { font-size: 42px; font-weight: 900; line-height: 1.1; }
-    .metric-unit { font-size: 18px; font-weight: 700; margin-top: 12px; }
-    .section-card { background: #ffffff; border-radius: 22px; padding: 30px; box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08); color: #0b2f4a; margin-bottom: 25px; }
-    .section-heading { font-size: 30px; font-weight: 850; color: #0b2f4a; margin-bottom: 18px; }
-    .recommendation { background: #f8fafc; border-left: 5px solid #0f766e; padding: 15px; border-radius: 12px; margin-top: 15px; color: #0b2f4a; font-weight: 600; }
+    .block-container {
+        max-width: 1180px;
+        padding-top: 2rem;
+    }
+
+    .dashboard-title {
+        font-size: 34px;
+        font-weight: 850;
+        color: #0b2f4a;
+        margin-bottom: 8px;
+    }
+
+    .dashboard-welcome {
+        font-size: 18px;
+        font-weight: 650;
+        color: #0b2f4a;
+        margin-bottom: 25px;
+    }
+
+    .metric-card {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 32px 20px;
+        text-align: center;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        min-height: 170px;
+        color: #0b2f4a;
+    }
+
+    .metric-title {
+        font-size: 16px;
+        font-weight: 800;
+        margin-bottom: 18px;
+    }
+
+    .metric-value {
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+    .metric-unit {
+        font-size: 18px;
+        font-weight: 700;
+        margin-top: 12px;
+    }
+
+    .section-card {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 30px;
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+        color: #0b2f4a;
+        margin-bottom: 25px;
+    }
+
+    .section-heading {
+        font-size: 30px;
+        font-weight: 850;
+        color: #0b2f4a;
+        margin-bottom: 18px;
+    }
+
+    .recommendation {
+        background: #f8fafc;
+        border-left: 5px solid #0f766e;
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 15px;
+        color: #0b2f4a;
+        font-weight: 600;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-    # 4. محتوى الهيدر (Header)
-    st.markdown('<div class="dashboard-title">Your Health Analysis Summary</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="dashboard-title">Your Health Analysis Summary</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        f'<div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>',
+        unsafe_allow_html=True
+    )
+
     st.markdown("---")
 
-    # 5. المؤشرات العلوية (Metrics)
     m1, m2, m3, m4 = st.columns(4)
+
     with m1:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">Predicted Glucose</div><div class="metric-value">{glucose}</div><div class="metric-unit">mg/dL</div></div>', unsafe_allow_html=True)
-    with m2:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">Risk Score</div><div class="metric-value">{risk_score}</div><div class="metric-unit">/100</div></div>', unsafe_allow_html=True)
-    with m3:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">Foot Risk</div><div class="metric-value">{foot_risk}</div><div class="metric-unit">No ulcer detected</div></div>', unsafe_allow_html=True)
-    with m4:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">Meal Carbs</div><div class="metric-value">{carbs}</div><div class="metric-unit">g</div></div>', unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # 6. الأقسام التفصيلية (Dietary & Wearable)
-  # 6. الأقسام التفصيلية (Dietary & Wearable)
-left, right = st.columns(2)
-
-with left:
-    st.markdown(
-        '<div class="section-card"><div class="section-heading">Dietary Analysis</div>',
-        unsafe_allow_html=True
-    )
-
-    if food_img:
-        st.image(Image.open(food_img), use_container_width=True)
-
-    st.metric("Calories", f"{calories} kcal")
-    st.metric("Carbohydrates", f"{carbs} g")
-
-    st.markdown(
-        '<div class="recommendation">This meal is high in carbs. Consider balancing it with fiber.</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with right:
-    st.markdown(
-        '<div class="section-card">',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="section-heading">Wearable Data Analysis</div>',
-        unsafe_allow_html=True
-    )
-
-    if wearable_csv:
-        st.dataframe(
-            pd.read_csv(wearable_csv).head(),
-            use_container_width=True
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">Predicted Glucose</div>
+                <div class="metric-value">{glucose}</div>
+                <div class="metric-unit">mg/dL</div>
+            </div>
+            """,
+            unsafe_allow_html=True
         )
 
-    st.line_chart([120, 132, 145, 138, 149])
+    with m2:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">Risk Score</div>
+                <div class="metric-value">{risk_score}</div>
+                <div class="metric-unit">/100</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    st.markdown(
-        '<div class="recommendation">Moderate glucose elevation detected.</div>',
-        unsafe_allow_html=True
-    )
+    with m3:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">Foot Risk</div>
+                <div class="metric-value">{foot_risk}</div>
+                <div class="metric-unit">No ulcer detected</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    with m4:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-title">Meal Carbs</div>
+                <div class="metric-value">{carbs}</div>
+                <div class="metric-unit">g</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-st.markdown("---", unsafe_allow_html=True)
+    st.markdown("---")
 
-    
-   # 7. التقييمات الإضافية (Foot & Retina)
-col1, col2 = st.columns(2)
+    left, right = st.columns(2)
 
-with col1:
-    st.markdown(
-        '<div class="section-card"><div class="section-heading">Foot Assessment</div>',
-        unsafe_allow_html=True
-    )
+    with left:
+        st.markdown(
+            '<div class="section-card"><div class="section-heading">Dietary Analysis</div>',
+            unsafe_allow_html=True
+        )
 
-    if foot_img:
-        st.image(Image.open(foot_img), width=350)
+        if food_img:
+            st.image(Image.open(food_img), use_container_width=True)
+        else:
+            st.info("No meal image uploaded.")
 
-    st.success("Low Risk: No ulcer indicators found")
+        st.metric("Calories", f"{calories} kcal")
+        st.metric("Carbohydrates", f"{carbs} g")
+        st.metric("Protein", f"{protein} g")
+        st.metric("Fat", f"{fat} g")
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="recommendation">This meal is high in carbohydrates. Consider balancing it with fiber and protein.</div>',
+            unsafe_allow_html=True
+        )
 
-with col2:
-    st.markdown(
-        '<div class="section-card"><div class="section-heading">Retinal Health Awareness</div>',
-        unsafe_allow_html=True
-    )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if risk_score >= 70:
-        st.warning("Schedule a retinal check-up")
-    else:
-        st.success("No retinal risk detected.")
+    with right:
+        st.markdown(
+            '<div class="section-card"><div class="section-heading">Wearable Data Analysis</div>',
+            unsafe_allow_html=True
+        )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+        if wearable_csv:
+            wearable_data = pd.read_csv(wearable_csv)
+            st.dataframe(wearable_data.head(), use_container_width=True)
+        else:
+            sample_data = pd.DataFrame({
+                "Time": ["10:00 AM", "11:00 AM", "12:00 PM"],
+                "Heart Rate": [72, 80, 76],
+                "Glucose Estimate": [120, 132, 145]
+            })
+            st.dataframe(sample_data, use_container_width=True)
+
+        st.line_chart([120, 132, 145, 138, 149])
+
+        st.markdown(
+            '<div class="recommendation">Moderate glucose elevation detected.</div>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown(
+            '<div class="section-card"><div class="section-heading">Foot Assessment</div>',
+            unsafe_allow_html=True
+        )
+
+        if foot_img:
+            st.image(Image.open(foot_img), width=350)
+        else:
+            st.info("No foot image uploaded.")
+
+        st.success("Low Risk: No ulcer indicators found.")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown(
+            '<div class="section-card"><div class="section-heading">Retinal Health Awareness</div>',
+            unsafe_allow_html=True
+        )
+
+        if risk_score >= 70 or glucose >= 180:
+            st.warning(
+                "Your glucose pattern may indicate a higher retinal health risk. "
+                "Please schedule a retinal check-up with a specialist."
+            )
+        else:
+            st.success("No retinal risk warning is detected at this time.")
+
+        st.markdown('</div>', unsafe_allow_html=True)
 # --------------------------------------------------
 # Sidebar Pages
 # --------------------------------------------------
