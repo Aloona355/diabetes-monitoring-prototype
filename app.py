@@ -304,7 +304,7 @@ if "auth_mode" not in st.session_state:
 # --------------------------------------------------
 def render_sidebar():
     with st.sidebar:
-        # عرض اللوجو مع إزالة أي خلفية بيضاء ليكون منسجماً مع الكحلي
+        # إزالة الخلفية البيضاء من اللوجو ودمجه مع الكحلي
         st.markdown(
             f"""
             <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
@@ -314,32 +314,33 @@ def render_sidebar():
             unsafe_allow_html=True
         )
 
+        # كود CSS جبار لإخفاء البوكس الرمادي نهائياً
+        st.markdown("""
+            <style>
+                /* استهداف الحاوية الخارجية للمنيو وإزالة الحدود والظلال */
+                div[data-testid="stVerticalBlock"] div[style*="flex-direction: column"] > div {
+                    background-color: transparent !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                /* التأكد من أن المنيو نفسه شفاف */
+                .nav-link {
+                    background-color: transparent !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
         selected = option_menu(
             menu_title=None,
-            options=[
-                "Home",
-                "Reports",
-                "History",
-                "Profile",
-                "Settings",
-                "Logout"
-            ],
-            icons=[
-                "house",
-                "file-earmark-text",
-                "clock-history",
-                "person",
-                "gear",
-                "box-arrow-left"
-            ],
+            options=["Home", "Reports", "History", "Profile", "Settings", "Logout"],
+            icons=["house", "file-earmark-text", "clock-history", "person", "gear", "box-arrow-left"],
             default_index=0,
             styles={
                 "container": {
                     "padding": "0!important",
-                    "background-color": "transparent", # جعل الحاوية شفافة تماماً
-                    "border": "none!important",        # إزالة الحدود (البوكس الرمادي)
-                    "box-shadow": "none",
-                    "margin": "0",
+                    "background-color": "transparent!important", # شفافية مطلقة
+                    "border": "none!important",                # إلغاء الحدود تماماً
+                    "box-shadow": "none!important",
                 },
                 "icon": {
                     "color": "white",
@@ -351,16 +352,14 @@ def render_sidebar():
                     "font-size": "16px",
                     "font-weight": "600",
                     "text-align": "left",
-                    "margin": "5px 0px",               # تباعد بسيط بين الأزرار لجمالية أفضل
+                    "margin": "0px",
                     "padding": "14px 18px",
                     "border-radius": "0px",
-                    "--hover-color": "rgba(255,255,255,0.05)",
                 },
                 "nav-link-selected": {
-                    "background-color": "rgba(255,255,255,0.1)", # تمييز بسيط جداً للاختيار الحالي
+                    "background-color": "rgba(255,255,255,0.08)", # ظل خفيف جداً للاختيار الحالي
                     "color": "white",
-                    "border-left": "4px solid #22d3ee",         # خط جانبي لإعطاء طابع "الاحترافية"
-                    "font-weight": "700",
+                    "border-left": "4px solid #22d3ee",         # الخط السماوي المميز
                 },
             }
         )
