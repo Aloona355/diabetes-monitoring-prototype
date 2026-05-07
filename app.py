@@ -253,24 +253,31 @@ label {
     }
 }
 
-/* Remove sidebar option menu box */
-[data-testid="stSidebar"] ul {
-    background: transparent !important;
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+.progress-fill {
+    height: 8px;
+    background: linear-gradient(90deg, #0891b2, #14b8a6);
+    border-radius: 20px;
 }
 
+/* إزالة البوكس الرمادي من السايدبار */
+[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+    background: transparent !important;
+}
+
+[data-testid="stSidebar"] .nav,
+[data-testid="stSidebar"] .nav-pills,
+[data-testid="stSidebar"] ul,
 [data-testid="stSidebar"] li {
     background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-[data-testid="stSidebar"] .nav {
-    background: transparent !important;
     background-color: transparent !important;
     box-shadow: none !important;
+    border: none !important;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 36px;
+    }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -473,36 +480,42 @@ def upload_page():
     render_sidebar()
 
     st.markdown('<div class="section-title">Upload Health Data</div>', unsafe_allow_html=True)
-    st.write("Upload the required files to generate an integrated diabetes risk analysis.")
+    st.write("Upload your health files to generate the diabetes monitoring summary.")
 
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Meal Image")
+        st.markdown('<div class="card-title">Meal Image</div>', unsafe_allow_html=True)
+        st.write("Upload a clear meal image for nutrition analysis.")
         food_img = st.file_uploader(
-            "Upload a clear image of your meal for nutritional analysis.",
-            type=["jpg", "jpeg", "png"]
+            "Meal Image",
+            type=["jpg", "jpeg", "png"],
+            label_visibility="collapsed"
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Wearable Device Data")
+        st.markdown('<div class="card-title">Wearable Device Data</div>', unsafe_allow_html=True)
+        st.write("Upload wearable data in CSV format.")
         wearable_csv = st.file_uploader(
-            "Upload wearable sensor data in CSV format for glucose pattern estimation.",
-            type=["csv"]
+            "Wearable CSV",
+            type=["csv"],
+            label_visibility="collapsed"
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Foot Assessment Image")
+        st.markdown('<div class="card-title">Foot Assessment Image</div>', unsafe_allow_html=True)
+        st.write("Upload a clear foot image for risk assessment.")
         foot_img = st.file_uploader(
-            "Upload a clear foot image to support diabetic foot risk assessment.",
-            type=["jpg", "jpeg", "png"]
+            "Foot Image",
+            type=["jpg", "jpeg", "png"],
+            label_visibility="collapsed"
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -510,14 +523,14 @@ def upload_page():
     st.session_state.wearable_csv = wearable_csv
     st.session_state.foot_img = foot_img
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     if food_img and wearable_csv and foot_img:
         if st.button("Generate Analysis", use_container_width=True):
             st.session_state.page = "overview"
             st.rerun()
     else:
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
-
-
 # --------------------------------------------------
 # Dashboard / Overview page
 # --------------------------------------------------
