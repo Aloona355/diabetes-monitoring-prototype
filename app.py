@@ -279,8 +279,8 @@ def render_sidebar():
     with st.sidebar:
         st.markdown(
             f"""
-            <div style="text-align:center; padding-top:18px; padding-bottom:26px;">
-                <img src="data:image/png;base64,{get_base64_logo()}" width="220">
+            <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
+                <img src="data:image/png;base64,{get_base64_logo()}" width="230">
             </div>
             """,
             unsafe_allow_html=True
@@ -288,30 +288,8 @@ def render_sidebar():
 
         selected = option_menu(
             menu_title=None,
-            options=[
-                "Overview",
-                "Dietary Analysis",
-                "Wearable Analysis",
-                "Foot Assessment",
-                "Retinal Awareness",
-                "Risk Summary",
-                "Reports",
-                "History",
-                "Profile",
-                "Settings",
-            ],
-            icons=[
-                "house",
-                "basket",
-                "smartwatch",
-                "activity",
-                "eye",
-                "clipboard-pulse",
-                "file-earmark-text",
-                "clock-history",
-                "person",
-                "gear",
-            ],
+            options=["Home"],
+            icons=["house"],
             default_index=0,
             styles={
                 "container": {
@@ -320,36 +298,35 @@ def render_sidebar():
                 },
                 "icon": {
                     "color": "white",
-                    "font-size": "20px",
+                    "font-size": "22px",
                 },
                 "nav-link": {
                     "color": "white",
-                    "font-size": "16px",
-                    "font-weight": "600",
+                    "font-size": "18px",
+                    "font-weight": "700",
                     "text-align": "left",
-                    "margin": "6px 0px",
-                    "padding": "12px 14px",
-                    "border-radius": "12px",
+                    "margin": "8px 0px",
+                    "padding": "14px 18px",
+                    "border-radius": "14px",
                     "--hover-color": "rgba(255,255,255,0.10)",
                 },
                 "nav-link-selected": {
                     "background": "linear-gradient(90deg, #0891b2, #14b8a6)",
                     "color": "white",
-                    "font-weight": "700",
+                    "font-weight": "800",
                 },
             }
         )
 
-        st.markdown("---")
+        st.markdown("<br><br><hr><br>", unsafe_allow_html=True)
 
-        if st.button("⇦  Logout", use_container_width=True):
+        if st.button("Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.page = "login"
             st.session_state.auth_mode = "login"
             st.rerun()
 
     return selected
-
 
 # --------------------------------------------------
 # Login / Create Account page
