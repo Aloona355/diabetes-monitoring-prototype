@@ -669,21 +669,20 @@ def dashboard_page():
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown(f"""
-    <div class="dashboard-header">
-        <div>
-            <div class="dashboard-title">
-                Your Health Analysis Summary
-            </div>
+   # Header
+st.markdown(
+    '<div class="dashboard-title">Your Health Analysis Summary</div>',
+    unsafe_allow_html=True
+)
 
-            <div class="dashboard-welcome">
-                Hello, {st.session_state.patient.get("name", "Patient")}
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown(
+    f'<div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>',
+    unsafe_allow_html=True
+)
 
-    st.markdown("---")
+st.markdown("---")
+
+   
 
     m1, m2, m3, m4 = st.columns(4)
 
