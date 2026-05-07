@@ -753,4 +753,4 @@ else:
     if st.session_state.page == "upload":
         upload_page()
     else:
-        overview_page()
+        dashboard_page()
