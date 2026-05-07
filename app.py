@@ -3,6 +3,7 @@ import pandas as pd
 from PIL import Image
 from fpdf import FPDF
 from datetime import datetime
+import base64
 
 # --------------------------------------------------
 # Page configuration
@@ -11,6 +12,15 @@ st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
 
 # Logo image file name
 LOGO = "IMG_5991.png"
+
+
+# --------------------------------------------------
+# Convert logo to base64 for sidebar display
+# --------------------------------------------------
+def get_base64_logo():
+    with open(LOGO, "rb") as image_file:
+        encoded = base64.b64encode(image_file.read()).decode()
+    return encoded
 
 
 # --------------------------------------------------
@@ -130,8 +140,37 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     color: white;
 }
 
+/* Dark professional sidebar */
 [data-testid="stSidebar"] {
-    background: #e6f4f6;
+    background: linear-gradient(180deg, #06263d 0%, #041c2c 100%);
+}
+
+/* Sidebar text */
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+/* Sidebar radio buttons */
+[data-testid="stSidebar"] .stRadio label {
+    background: transparent;
+    padding: 12px 14px;
+    border-radius: 12px;
+    transition: 0.3s;
+    margin-bottom: 8px;
+}
+
+/* Sidebar radio hover */
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: rgba(255,255,255,0.10);
+}
+
+/* Sidebar logout button */
+[data-testid="stSidebar"] .stButton > button {
+    background: linear-gradient(90deg, #0ea5e9, #14b8a6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
 }
 
 .small-center-text {
@@ -204,14 +243,21 @@ def create_pdf_report(patient, risk_score):
 
 
 # --------------------------------------------------
-# Sidebar navigation
+# Professional sidebar
 # --------------------------------------------------
 def render_sidebar():
-    st.sidebar.image(LOGO, width=130)
-    st.sidebar.markdown("## IDMS")
+    st.sidebar.markdown(
+        f"""
+        <div style="text-align:center; padding-top:20px; padding-bottom:20px;">
+            <img src="data:image/png;base64,{get_base64_logo()}" width="120">
+            <h2 style="color:white; margin-top:10px;">IDMS</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     selected = st.sidebar.radio(
-        "Navigation",
+        "",
         [
             "Overview",
             "Dietary Analysis",
@@ -229,10 +275,6 @@ def render_sidebar():
 
     st.sidebar.markdown("---")
 
-    if st.sidebar.button("Back to Upload", use_container_width=True):
-        st.session_state.page = "upload"
-        st.rerun()
-
     if st.sidebar.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.page = "login"
@@ -246,7 +288,6 @@ def render_sidebar():
 # Login / Create Account page
 # --------------------------------------------------
 def login_page():
-    # Center the logo using columns
     logo_left, logo_center, logo_right = st.columns([1, 1.4, 1])
     with logo_center:
         st.image(LOGO, width=420)
@@ -259,7 +300,6 @@ def login_page():
     left, center, right = st.columns([1, 1.15, 1])
 
     with center:
-        # Login form
         if st.session_state.auth_mode == "login":
             st.markdown(
                 '<div class="section-title" style="text-align:center;">Welcome Back</div>',
@@ -300,7 +340,6 @@ def login_page():
                 st.session_state.auth_mode = "create"
                 st.rerun()
 
-        # Create account form
         else:
             st.markdown(
                 '<div class="section-title" style="text-align:center;">Create Your Account</div>',
@@ -354,20 +393,8 @@ def login_page():
 # Upload page
 # --------------------------------------------------
 def upload_page():
-    st.sidebar.image(LOGO, width=120)
-    st.sidebar.markdown("### Patient Profile")
-    st.sidebar.write(f"Name: {st.session_state.patient.get('name')}")
-    st.sidebar.write(f"Email: {st.session_state.patient.get('email')}")
-    st.sidebar.write(f"Age: {st.session_state.patient.get('age')}")
-    st.sidebar.write(f"Type: {st.session_state.patient.get('type')}")
+    render_sidebar()
 
-    if st.sidebar.button("Logout", use_container_width=True):
-        st.session_state.logged_in = False
-        st.session_state.page = "login"
-        st.session_state.auth_mode = "login"
-        st.rerun()
-
-    st.image(LOGO, width=160)
     st.markdown('<div class="section-title">Upload Health Data</div>', unsafe_allow_html=True)
     st.write("Upload the required files to generate an integrated diabetes risk analysis.")
 
@@ -424,7 +451,6 @@ def overview_page():
 
     selected_page = render_sidebar()
 
-    # Demo values for prototype display
     calories = 550
     carbs = 65
     protein = 28
@@ -433,14 +459,8 @@ def overview_page():
     foot_risk = "Low Risk"
     risk_score = 46
 
-    top1, top2 = st.columns([1, 5])
-
-    with top1:
-        st.image(LOGO, width=120)
-
-    with top2:
-        st.markdown('<div class="section-title">Integrated Health Overview</div>', unsafe_allow_html=True)
-        st.write(f"Analysis summary for {st.session_state.patient.get('name')}")
+    st.markdown('<div class="section-title">Integrated Health Overview</div>', unsafe_allow_html=True)
+    st.write(f"Analysis summary for {st.session_state.patient.get('name')}")
 
     st.markdown("---")
 
