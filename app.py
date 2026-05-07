@@ -628,13 +628,28 @@ def dashboard_page():
         st.metric("Carbohydrates", f"{carbs} g")
         st.markdown('<div class="recommendation">This meal is high in carbs. Consider balancing it with fiber.</div></div>', unsafe_allow_html=True)
 
-    with right:
-        st.markdown('<div class="card">', unsafe_allow_html=True) # تم تصحيح الكلاس هنا ليتناسب مع الستايل
-        st.markdown('<div class="section-heading">Wearable Data Analysis</div>', unsafe_allow_html=True)
-        if wearable_csv:
-            st.dataframe(pd.read_csv(wearable_csv).head(), use_container_width=True)
-        st.line_chart([120, 132, 145, 138, 149])
-        st.markdown('<div class="recommendation">Moderate glucose elevation detected.</div></div>', unsafe_allow_html=True)
+   with right:
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="section-heading">Wearable Data Analysis</div>',
+        unsafe_allow_html=True
+    )
+
+    if wearable_csv:
+        st.dataframe(
+            pd.read_csv(wearable_csv).head(),
+            use_container_width=True
+        )
+
+    st.line_chart([120, 132, 145, 138, 149])
+
+    st.markdown(
+        '<div class="recommendation">Moderate glucose elevation detected.</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # 7. التقييمات الإضافية (Foot & Retina)
     col1, col2 = st.columns(2)
