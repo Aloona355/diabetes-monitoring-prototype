@@ -314,60 +314,62 @@ def render_sidebar():
         )
 
         selected = option_menu(
-    menu_title=None,
+            menu_title=None,
+            options=[
+                "Home",
+                "Reports",
+                "History",
+                "Profile",
+                "Settings",
+                "Logout"
+            ],
+            icons=[
+                "house",
+                "file-earmark-text",
+                "clock-history",
+                "person",
+                "gear",
+                "box-arrow-left"
+            ],
+            default_index=0,
+            styles={
+                "container": {
+                    "padding": "0!important",
+                    "background": "transparent",
+                    "background-color": "transparent",
+                    "border": "none",
+                    "box-shadow": "none",
+                },
+                "icon": {
+                    "color": "white",
+                    "font-size": "20px",
+                },
+                "nav-link": {
+                    "background-color": "transparent",
+                    "color": "white",
+                    "font-size": "16px",
+                    "font-weight": "600",
+                    "text-align": "left",
+                    "margin": "0px",
+                    "padding": "14px 18px",
+                    "border-radius": "0px",
+                    "--hover-color": "rgba(255,255,255,0.08)",
+                },
+                "nav-link-selected": {
+                    "background": "rgba(255,255,255,0.05)",
+                    "color": "white",
+                    "border-left": "3px solid #22d3ee",
+                },
+            }
+        )
 
-    options=[
-        "Home",
-        "Reports",
-        "History",
-        "Profile",
-        "Settings",
-        "Logout"
-    ],
-
-    icons=[
-        "house",
-        "file-earmark-text",
-        "clock-history",
-        "person",
-        "gear",
-        "box-arrow-left"
-    ],
-
-    default_index=0,
-
-styles={
-    "container": {
-        "padding": "0!important",
-        "background-color": "transparent",
-    },
-    "icon": {
-        "color": "white",
-        "font-size": "20px",
-    },
-    "nav-link": {
-        "color": "white",
-        "font-size": "16px",
-        "font-weight": "600",
-        "text-align": "left",
-        "margin": "0px",
-        "padding": "14px 18px",
-        "border-radius": "0px",
-        "--hover-color": "rgba(255,255,255,0.08)",
-    },
-    "nav-link-selected": {
-        "background-color": "transparent",
-        "color": "white",
-    },
-}
-)
-
-
-
-  
+        if selected == "Logout":
+            st.session_state.logged_in = False
+            st.session_state.page = "login"
+            st.session_state.auth_mode = "login"
+            st.rerun()
 
     return selected
-
 # --------------------------------------------------
 # Login / Create Account page
 # --------------------------------------------------
