@@ -304,10 +304,11 @@ if "auth_mode" not in st.session_state:
 # --------------------------------------------------
 def render_sidebar():
     with st.sidebar:
+        # عرض اللوجو مع إزالة أي خلفية بيضاء ليكون منسجماً مع الكحلي
         st.markdown(
             f"""
             <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
-                <img src="data:image/png;base64,{get_base64_logo()}" width="230">
+                <img src="data:image/png;base64,{get_base64_logo()}" width="230" style="mix-blend-mode: multiply;">
             </div>
             """,
             unsafe_allow_html=True
@@ -335,10 +336,10 @@ def render_sidebar():
             styles={
                 "container": {
                     "padding": "0!important",
-                    "background": "transparent",
-                    "background-color": "transparent",
-                    "border": "none",
+                    "background-color": "transparent", # جعل الحاوية شفافة تماماً
+                    "border": "none!important",        # إزالة الحدود (البوكس الرمادي)
                     "box-shadow": "none",
+                    "margin": "0",
                 },
                 "icon": {
                     "color": "white",
@@ -350,15 +351,16 @@ def render_sidebar():
                     "font-size": "16px",
                     "font-weight": "600",
                     "text-align": "left",
-                    "margin": "0px",
+                    "margin": "5px 0px",               # تباعد بسيط بين الأزرار لجمالية أفضل
                     "padding": "14px 18px",
                     "border-radius": "0px",
-                    "--hover-color": "rgba(255,255,255,0.08)",
+                    "--hover-color": "rgba(255,255,255,0.05)",
                 },
                 "nav-link-selected": {
-                    "background": "rgba(255,255,255,0.05)",
+                    "background-color": "rgba(255,255,255,0.1)", # تمييز بسيط جداً للاختيار الحالي
                     "color": "white",
-                    "border-left": "3px solid #22d3ee",
+                    "border-left": "4px solid #22d3ee",         # خط جانبي لإعطاء طابع "الاحترافية"
+                    "font-weight": "700",
                 },
             }
         )
