@@ -667,7 +667,8 @@ with right:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("---")
+st.markdown("---", unsafe_allow_html=True)
+
     # 7. التقييمات الإضافية (Foot & Retina)
     col1, col2 = st.columns(2)
     with col1:
