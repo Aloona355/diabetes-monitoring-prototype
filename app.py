@@ -33,6 +33,18 @@ st.markdown("""
     max-width: 1200px;
 }
 
+/* Center all images, including the logo */
+[data-testid="stImage"] {
+    display: flex;
+    justify-content: center;
+}
+
+.logo-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .card {
     background: white;
     padding: 28px;
@@ -47,11 +59,6 @@ st.markdown("""
     padding: 35px 20px 10px 20px;
 }
 
-.hero img {
-    display: block;
-    margin: 0 auto;
-}
-
 .hero-title {
     font-size: 46px;
     font-weight: 800;
@@ -64,7 +71,41 @@ st.markdown("""
     font-size: 26px;
     font-weight: 750;
     color: #075985;
-    margin-bottom: 10px;
+    margin-bottom: 18px;
+}
+
+/* Make form labels clear and readable */
+label, .stTextInput label, .stNumberInput label, .stSelectbox label {
+    color: #0B2F4A !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+}
+
+/* Improve input fields readability */
+.stTextInput input,
+.stNumberInput input {
+    background-color: #ffffff !important;
+    color: #0B2F4A !important;
+    border: 1px solid #b7dce5 !important;
+    border-radius: 12px !important;
+}
+
+/* Improve selectbox readability */
+.stSelectbox div[data-baseweb="select"] {
+    background-color: #ffffff !important;
+    color: #0B2F4A !important;
+    border: 1px solid #b7dce5 !important;
+    border-radius: 12px !important;
+}
+
+/* Selectbox text color */
+.stSelectbox div[data-baseweb="select"] span {
+    color: #0B2F4A !important;
+}
+
+/* Placeholder color */
+.stTextInput input::placeholder {
+    color: #64748b !important;
 }
 
 .metric-card {
@@ -144,7 +185,7 @@ def create_pdf_report(patient, risk_score):
         "Diabetes Type": patient.get("type", "N/A"),
         "Estimated Calories": "550 kcal",
         "Estimated Carbohydrates": "65 g",
-        "Predicted Glucose": "145 mg/dL",
+        "Estimated Glucose": "145 mg/dL",
         "Foot Health Status": "Low Risk",
         "Overall Risk Score": f"{risk_score}/100",
         "Recommendation": (
@@ -202,14 +243,20 @@ def render_sidebar():
 # --------------------------------------------------
 def login_page():
     st.markdown('<div class="hero">', unsafe_allow_html=True)
-    st.image(LOGO, width=320)
+
+    # Centered large logo
+    st.markdown('<div class="logo-center">', unsafe_allow_html=True)
+    st.image(LOGO, width=360)
+    st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown(
         '<div class="hero-title">Intelligent Diabetes Monitoring System</div>',
         unsafe_allow_html=True
     )
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Login form without white card background
+    # Patient form without white card background
     left, center, right = st.columns([1, 1.2, 1])
 
     with center:
@@ -315,7 +362,7 @@ def overview_page():
 
     selected_page = render_sidebar()
 
-    # Fixed demo values for prototype display
+    # Demo values for prototype display
     calories = 550
     carbs = 65
     protein = 28
@@ -402,7 +449,7 @@ def overview_page():
         c2.metric("Carbohydrates", f"{carbs} g")
         c2.metric("Fat", f"{fat} g")
 
-        # Personalized food recommendation based on carbohydrates
+        # Personalized recommendation based on carbohydrate amount
         if carbs >= 70:
             st.warning(
                 "This meal appears to contain a high amount of carbohydrates. "
@@ -454,7 +501,7 @@ def overview_page():
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Retinal Health Awareness")
 
-        # Retinal warning only appears when patient data indicates poor glucose status
+        # Retinal warning only appears when the patient data indicates poor glucose status
         if risk_score >= 70 or glucose >= 180:
             st.warning(
                 "Persistent glucose instability may increase the risk of diabetic retinopathy. "
