@@ -325,5 +325,8 @@ def login_page():
     with logo_center:
         st.image(LOGO, width=430)
 
-    st.markdown(
-        '<div class="hero-title">Intelligent Diabetes
+st.markdown("""
+<div class="hero-title">
+Intelligent Diabetes Monitoring System
+</div>
+""", unsafe_allow_html=True)
