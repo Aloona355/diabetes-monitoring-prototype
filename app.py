@@ -6,7 +6,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
 
-LOGO = "PHOTO-2026-02-17-21-43-19.jpeg"
+LOGO = "IMG_5991.png"
 
 st.markdown("""
 <style>
