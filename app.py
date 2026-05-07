@@ -9,7 +9,7 @@ from datetime import datetime
 # --------------------------------------------------
 st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
 
-# Use a transparent PNG logo if possible
+# Logo image file name
 LOGO = "IMG_5991.png"
 
 
@@ -33,21 +33,6 @@ st.markdown("""
     max-width: 1200px;
 }
 
-/* Main logo section */
-.logo-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
-.logo-wrapper img {
-    width: 430px !important;
-    max-width: 430px !important;
-}
-
-/* Main title */
 .hero-title {
     font-size: 48px;
     font-weight: 800;
@@ -55,18 +40,23 @@ st.markdown("""
     text-align: center;
     line-height: 1.2;
     margin-top: 10px;
-    margin-bottom: 25px;
+    margin-bottom: 28px;
 }
 
-/* Section titles */
 .section-title {
-    font-size: 26px;
-    font-weight: 750;
+    font-size: 30px;
+    font-weight: 800;
     color: #075985;
-    margin-bottom: 18px;
+    margin-bottom: 8px;
 }
 
-/* Cards */
+.auth-subtitle {
+    text-align: center;
+    color: #475569;
+    font-size: 15px;
+    margin-bottom: 24px;
+}
+
 .card {
     background: white;
     padding: 28px;
@@ -76,14 +66,12 @@ st.markdown("""
     margin-bottom: 22px;
 }
 
-/* Make form labels clear */
-label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio label {
+label, .stTextInput label, .stNumberInput label, .stSelectbox label {
     color: #0B2F4A !important;
     font-weight: 700 !important;
     font-size: 15px !important;
 }
 
-/* Input fields */
 .stTextInput input,
 .stNumberInput input {
     background-color: #ffffff !important;
@@ -92,7 +80,6 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio la
     border-radius: 12px !important;
 }
 
-/* Selectbox */
 .stSelectbox div[data-baseweb="select"] {
     background-color: #ffffff !important;
     color: #0B2F4A !important;
@@ -104,12 +91,10 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio la
     color: #0B2F4A !important;
 }
 
-/* Placeholder */
 .stTextInput input::placeholder {
     color: #64748b !important;
 }
 
-/* Metric cards */
 .metric-card {
     background: white;
     padding: 24px;
@@ -131,7 +116,6 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio la
     font-weight: 800;
 }
 
-/* Buttons */
 .stButton > button {
     background: linear-gradient(90deg, #0369a1, #0f766e);
     color: white;
@@ -146,25 +130,20 @@ label, .stTextInput label, .stNumberInput label, .stSelectbox label, .stRadio la
     color: white;
 }
 
-/* Sidebar */
 [data-testid="stSidebar"] {
     background: #e6f4f6;
 }
 
-/* Sidebar radio style */
-[data-testid="stSidebar"] label {
-    color: #0B2F4A !important;
+.small-center-text {
+    text-align: center;
+    color: #475569;
+    margin-top: 18px;
+    margin-bottom: 5px;
 }
 
-/* Mobile-friendly title and logo */
 @media (max-width: 768px) {
     .hero-title {
         font-size: 38px;
-    }
-
-    .logo-wrapper img {
-        width: 360px !important;
-        max-width: 360px !important;
     }
 }
 </style>
@@ -182,6 +161,9 @@ if "page" not in st.session_state:
 
 if "patient" not in st.session_state:
     st.session_state.patient = {}
+
+if "auth_mode" not in st.session_state:
+    st.session_state.auth_mode = "login"
 
 
 # --------------------------------------------------
@@ -254,6 +236,7 @@ def render_sidebar():
     if st.sidebar.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.page = "login"
+        st.session_state.auth_mode = "login"
         st.rerun()
 
     return selected
@@ -263,75 +246,107 @@ def render_sidebar():
 # Login / Create Account page
 # --------------------------------------------------
 def login_page():
-    # Centered logo using HTML to force alignment and size
-    st.markdown(
-        f"""
-        <div class="logo-wrapper">
-            <img src="app/static/{LOGO}">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Center the logo using columns
+    logo_left, logo_center, logo_right = st.columns([1, 1.4, 1])
+    with logo_center:
+        st.image(LOGO, width=420)
 
     st.markdown(
         '<div class="hero-title">Intelligent Diabetes Monitoring System</div>',
         unsafe_allow_html=True
     )
 
-    left, center, right = st.columns([1, 1.2, 1])
+    left, center, right = st.columns([1, 1.15, 1])
 
     with center:
-        # User chooses whether to login or create account first
-        account_mode = st.radio(
-            "Account Access",
-            ["Login", "Create Account"],
-            horizontal=True
-        )
-
-        if account_mode == "Login":
+        # Login form
+        if st.session_state.auth_mode == "login":
             st.markdown(
-                '<div class="section-title" style="text-align:center;">Login to Your Account</div>',
+                '<div class="section-title" style="text-align:center;">Welcome Back</div>',
                 unsafe_allow_html=True
             )
+            st.markdown(
+                '<div class="auth-subtitle">Sign in to continue monitoring your health insights.</div>',
+                unsafe_allow_html=True
+            )
+
+            email = st.text_input("Email Address")
+            password = st.text_input("Password", type="password")
+            remember = st.checkbox("Remember me")
+
+            if st.button("Sign In", use_container_width=True):
+                if email.strip() == "":
+                    st.error("Enter your email address to continue.")
+                elif password.strip() == "":
+                    st.error("Enter your password to continue.")
+                else:
+                    st.session_state.patient = {
+                        "name": "Patient",
+                        "email": email,
+                        "age": "N/A",
+                        "gender": "N/A",
+                        "type": "N/A"
+                    }
+                    st.session_state.logged_in = True
+                    st.session_state.page = "upload"
+                    st.rerun()
+
+            st.markdown(
+                '<div class="small-center-text">Don’t have an account?</div>',
+                unsafe_allow_html=True
+            )
+
+            if st.button("Create Account", use_container_width=True):
+                st.session_state.auth_mode = "create"
+                st.rerun()
+
+        # Create account form
         else:
             st.markdown(
                 '<div class="section-title" style="text-align:center;">Create Your Account</div>',
                 unsafe_allow_html=True
             )
+            st.markdown(
+                '<div class="auth-subtitle">Create an account to start your diabetes monitoring journey.</div>',
+                unsafe_allow_html=True
+            )
 
-        # Patient account information
-        name = st.text_input("Full Name")
-        email = st.text_input("Email Address")
-        age = st.number_input("Age", min_value=1, max_value=100, value=23)
-        gender = st.selectbox("Gender", ["Female", "Male"])
-        diabetes_type = st.selectbox(
-            "Diabetes Type",
-            ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"]
-        )
+            name = st.text_input("Full Name")
+            email = st.text_input("Email Address")
+            password = st.text_input("Password", type="password")
+            age = st.number_input("Age", min_value=1, max_value=100, value=23)
+            gender = st.selectbox("Gender", ["Female", "Male"])
+            diabetes_type = st.selectbox(
+                "Diabetes Type",
+                ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"]
+            )
 
-        button_text = (
-            "Login and Continue"
-            if account_mode == "Login"
-            else "Create Account and Continue"
-        )
+            if st.button("Create Account and Continue", use_container_width=True):
+                if name.strip() == "":
+                    st.error("Enter your name to continue.")
+                elif email.strip() == "":
+                    st.error("Enter your email address to continue.")
+                elif password.strip() == "":
+                    st.error("Create a password to continue.")
+                else:
+                    st.session_state.patient = {
+                        "name": name,
+                        "email": email,
+                        "age": age,
+                        "gender": gender,
+                        "type": diabetes_type
+                    }
+                    st.session_state.logged_in = True
+                    st.session_state.page = "upload"
+                    st.rerun()
 
-        if st.button(button_text, use_container_width=True):
-            if name.strip() == "":
-                st.error("Enter your name to continue.")
-            elif email.strip() == "":
-                st.error("Enter your email address to continue.")
-            else:
-                st.session_state.patient = {
-                    "name": name,
-                    "email": email,
-                    "age": age,
-                    "gender": gender,
-                    "type": diabetes_type,
-                    "account_mode": account_mode
-                }
+            st.markdown(
+                '<div class="small-center-text">Already have an account?</div>',
+                unsafe_allow_html=True
+            )
 
-                st.session_state.logged_in = True
-                st.session_state.page = "upload"
+            if st.button("Back to Sign In", use_container_width=True):
+                st.session_state.auth_mode = "login"
                 st.rerun()
 
 
@@ -349,6 +364,7 @@ def upload_page():
     if st.sidebar.button("Logout", use_container_width=True):
         st.session_state.logged_in = False
         st.session_state.page = "login"
+        st.session_state.auth_mode = "login"
         st.rerun()
 
     st.image(LOGO, width=160)
@@ -428,7 +444,6 @@ def overview_page():
 
     st.markdown("---")
 
-    # Top health indicators
     m1, m2, m3, m4 = st.columns(4)
 
     with m1:
@@ -483,7 +498,6 @@ def overview_page():
 
     left, right = st.columns(2)
 
-    # Dietary analysis section
     with left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Meal Nutrition Analysis")
@@ -495,7 +509,6 @@ def overview_page():
         c2.metric("Carbohydrates", f"{carbs} g")
         c2.metric("Fat", f"{fat} g")
 
-        # Personalized recommendation based on carbohydrate amount
         if carbs >= 70:
             st.warning(
                 "This meal appears to contain a high amount of carbohydrates. "
@@ -513,7 +526,6 @@ def overview_page():
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Wearable analysis section
     with right:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Wearable-Based Glucose Analysis")
@@ -534,7 +546,6 @@ def overview_page():
 
     col1, col2 = st.columns(2)
 
-    # Foot assessment section
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Diabetic Foot Assessment")
@@ -542,12 +553,10 @@ def overview_page():
         st.success("Low Risk: No visible ulcer indicators detected in the uploaded image.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Retinal awareness section
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Retinal Health Awareness")
 
-        # Retinal warning only appears when the patient data indicates poor glucose status
         if risk_score >= 70 or glucose >= 180:
             st.warning(
                 "Persistent glucose instability may increase the risk of diabetic retinopathy. "
@@ -565,7 +574,6 @@ def overview_page():
 
     report_col1, report_col2 = st.columns([2, 1])
 
-    # Integrated risk summary
     with report_col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Overall Diabetes Risk Summary")
@@ -583,7 +591,6 @@ def overview_page():
         st.caption("This system is an academic prototype and is not intended for clinical diagnosis.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # PDF report download
     with report_col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("Generate Health Report")
