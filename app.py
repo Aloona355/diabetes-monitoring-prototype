@@ -559,7 +559,9 @@ def upload_page():
 # --------------------------------------------------
 # Dashboard / Overview page
 # --------------------------------------------------
-def dashboard_page():selected_page = render_sidebar()
+def dashboard_page():
+
+    selected_page = render_sidebar()
 
 food_img = st.session_state.get("food_img")
 wearable_csv = st.session_state.get("wearable_csv")
