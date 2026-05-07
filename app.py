@@ -241,7 +241,6 @@ def render_sidebar():
             f"""
             <div style="text-align:center; padding-top:18px; padding-bottom:22px;">
                 <img src="data:image/png;base64,{get_base64_logo()}" width="210">
-                <h2 style="color:white; margin-top:8px; font-weight:800;">IDMS</h2>
             </div>
             """,
             unsafe_allow_html=True
@@ -303,7 +302,7 @@ def render_sidebar():
 
         st.markdown("---")
 
-        if st.button("↪  Logout", use_container_width=True):
+if st.button("⎋  Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.page = "login"
             st.session_state.auth_mode = "login"
