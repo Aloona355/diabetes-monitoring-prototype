@@ -723,10 +723,7 @@ def dashboard_page():
             )
 
         insulin_recommendation = (
-            f"Based on your doctor-prescribed insulin-to-carbohydrate ratio "
-            f"(1 unit per {insulin_carb_ratio}g carbs), this meal may require approximately "
-            f"{estimated_meal_insulin} units of insulin. "
-            f"Please follow your physician’s instructions before taking insulin."
+           f"Suggested insulin dose: {estimated_meal_insulin} units for this meal."
         )
 
         st.markdown(
