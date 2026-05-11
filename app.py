@@ -18,6 +18,7 @@ def get_base64_logo():
     with open(LOGO, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
+
 def clean_pdf_text(text):
     return str(text).encode("latin-1", "ignore").decode("latin-1")
 
@@ -32,16 +33,23 @@ def create_pdf_report(patient, risk_score):
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
 
+    insulin_carb_ratio = patient.get("insulin_carb_ratio", 10)
+    estimated_carbs = 65
+    estimated_meal_insulin = round(estimated_carbs / insulin_carb_ratio, 1)
+
     data = {
         "Generated on": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Name": patient.get("name", "Patient"),
         "Email Address": patient.get("email", "N/A"),
         "Estimated Calories": "550 kcal",
-        "Estimated Carbohydrates": "65 g",
+        "Estimated Carbohydrates": f"{estimated_carbs} g",
         "Estimated Glucose": "145 mg/dL",
+        "Daily Insulin Dose": f"{patient.get('daily_insulin_dose', 'N/A')} units",
+        "Insulin-to-Carbohydrate Ratio": f"1 unit per {insulin_carb_ratio} g carbs",
+        "Estimated Meal Insulin": f"{estimated_meal_insulin} units",
         "Foot Health Status": "Low Risk",
         "Overall Risk Score": f"{risk_score}/100",
-        "Recommendation": "Maintain regular glucose monitoring and schedule retinal screening if needed."
+        "Recommendation": "Follow your physician's insulin instructions and maintain balanced meals."
     }
 
     for key, value in data.items():
@@ -71,7 +79,6 @@ st.markdown("""
     max-width: 1280px;
 }
 
-/* Login */
 .hero-title {
     font-size: 48px;
     font-weight: 850;
@@ -103,7 +110,6 @@ st.markdown("""
     margin-bottom: 5px;
 }
 
-/* Cards */
 .card {
     background: white;
     padding: 22px;
@@ -142,30 +148,6 @@ st.markdown("""
     margin-top: 8px;
 }
 
-.metric-note {
-    font-size: 13px;
-    color: #f59e0b;
-    font-weight: 700;
-}
-
-.low-risk {
-    color: #059669;
-    font-weight: 850;
-}
-
-.moderate {
-    color: #f59e0b;
-    font-weight: 800;
-}
-
-.footer-note {
-    text-align: center;
-    color: #64748b;
-    font-size: 12px;
-    margin-top: 12px;
-}
-
-/* Inputs */
 label {
     color: #0B2F4A !important;
     font-weight: 700 !important;
@@ -186,11 +168,6 @@ label {
     border-radius: 12px !important;
 }
 
-.stSelectbox div[data-baseweb="select"] span {
-    color: #0B2F4A !important;
-}
-
-/* Buttons */
 .stButton > button {
     background: linear-gradient(90deg, #0369a1, #0f766e);
     color: white;
@@ -205,17 +182,12 @@ label {
     color: white;
 }
 
-/* Sidebar */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #06263d 0%, #031827 100%);
 }
 
 [data-testid="stSidebar"] * {
     color: white !important;
-}
-
-[data-testid="stSidebar"] hr {
-    border-color: rgba(255,255,255,0.18);
 }
 
 [data-testid="stSidebar"] .stButton > button {
@@ -233,34 +205,6 @@ label {
     background: rgba(255,255,255,0.10);
 }
 
-/* Simple progress bars */
-.progress-track {
-    width: 100%;
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 8px;
-    background: linear-gradient(90deg, #0891b2, #14b8a6);
-    border-radius: 20px;
-}
-
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 36px;
-    }
-}
-
-.progress-fill {
-    height: 8px;
-    background: linear-gradient(90deg, #0891b2, #14b8a6);
-    border-radius: 20px;
-}
-
-/* إزالة البوكس الرمادي من السايدبار */
 [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
     background: transparent !important;
 }
@@ -393,7 +337,9 @@ def login_page():
                         "email": email,
                         "age": "N/A",
                         "gender": "N/A",
-                        "type": "N/A"
+                        "type": "N/A",
+                        "daily_insulin_dose": 0,
+                        "insulin_carb_ratio": 10
                     }
                     st.session_state.logged_in = True
                     st.session_state.page = "upload"
@@ -427,22 +373,23 @@ def login_page():
                 "Diabetes Type",
                 ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"]
             )
+
             daily_insulin_dose = st.number_input(
-            "Daily Insulin Dose (units)",
-            min_value=0.0,
-            max_value=200.0,
-            value=0.0,
-            step=0.5
+                "Daily Insulin Dose (units)",
+                min_value=0.0,
+                max_value=200.0,
+                value=0.0,
+                step=0.5
             )
 
             insulin_carb_ratio = st.number_input(
-            "Insulin-to-Carbohydrate Ratio (1 unit per X g carbs)",
-            min_value=1.0,
-            max_value=100.0,
-            value=10.0,
-            step=1.0
+                "Insulin-to-Carbohydrate Ratio (1 unit per X g carbs)",
+                min_value=1.0,
+                max_value=100.0,
+                value=10.0,
+                step=1.0
             )
-            
+
             if st.button("Create Account and Continue", use_container_width=True):
                 if name.strip() == "":
                     st.error("Enter your name to continue.")
@@ -460,7 +407,7 @@ def login_page():
                         "daily_insulin_dose": daily_insulin_dose,
                         "insulin_carb_ratio": insulin_carb_ratio
                     }
-                    
+
                     st.session_state.logged_in = True
                     st.session_state.page = "upload"
                     st.rerun()
@@ -479,11 +426,10 @@ def login_page():
 # Upload page
 # --------------------------------------------------
 def upload_page():
-
     selected = render_sidebar()
 
     st.markdown(
-        f"""
+        """
         <div style="display:flex; align-items:center; gap:16px; margin-bottom:10px;">
             <div>
                 <div class="section-title">Upload Health Data</div>
@@ -502,7 +448,6 @@ def upload_page():
 
     with col1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
         st.markdown("""
         <div class="card-title">Meal Image</div>
         <div style="color:#475569; margin-bottom:15px;">
@@ -516,12 +461,10 @@ def upload_page():
             key="food_upload",
             label_visibility="hidden"
         )
-
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
         st.markdown("""
         <div class="card-title">Wearable Device Data</div>
         <div style="color:#475569; margin-bottom:15px;">
@@ -535,12 +478,10 @@ def upload_page():
             key="wearable_upload",
             label_visibility="hidden"
         )
-
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-
         st.markdown("""
         <div class="card-title">Foot Assessment Image</div>
         <div style="color:#475569; margin-bottom:15px;">
@@ -554,7 +495,6 @@ def upload_page():
             key="foot_upload",
             label_visibility="hidden"
         )
-
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.session_state.food_img = food_img
@@ -564,17 +504,15 @@ def upload_page():
     st.markdown("<br>", unsafe_allow_html=True)
 
     if food_img and wearable_csv and foot_img:
-
         st.success("All files uploaded successfully.")
 
         if st.button("Start AI Analysis", use_container_width=True):
             st.session_state.page = "dashboard"
             st.rerun()
-
     else:
         st.info("Upload the meal image, wearable data file, and foot image to continue.")
 
-# --------------------------------------------------
+
 # --------------------------------------------------
 # Dashboard / Overview page
 # --------------------------------------------------
@@ -586,13 +524,11 @@ def dashboard_page():
     foot_img = st.session_state.get("foot_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
+
     patient = st.session_state.patient
-
-   daily_insulin_dose = patient.get("daily_insulin_dose", 0)
-
-   insulin_carb_ratio = patient.get("insulin_carb_ratio", 10)
-
-   estimated_meal_insulin = round(carbs / insulin_carb_ratio, 1)
+    daily_insulin_dose = patient.get("daily_insulin_dose", 0)
+    insulin_carb_ratio = patient.get("insulin_carb_ratio", 10)
+    estimated_meal_insulin = round(carbs / insulin_carb_ratio, 1)
 
     glucose, risk_score, foot_risk = 145, 70, "Low"
 
@@ -692,7 +628,7 @@ def dashboard_page():
     )
 
     st.markdown(
-        f'<div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>',
+        f'<div class="dashboard-welcome">Hello, {patient.get("name", "Patient")}</div>',
         unsafe_allow_html=True
     )
 
@@ -753,45 +689,10 @@ def dashboard_page():
     left, right = st.columns(2)
 
     with left:
-        # Food recommendation
-if carbs >= 60:
-    food_recommendation = (
-        "This meal contains a high amount of carbohydrates. "
-        "Consider replacing part of the rice, bread, or pasta with healthier options such as grilled chicken, fish, eggs, vegetables, or salad to help maintain more stable glucose levels."
-    )
-
-elif carbs >= 30:
-    food_recommendation = (
-        "This meal contains a moderate amount of carbohydrates. "
-        "For better glucose balance, try adding more protein or fiber-rich foods such as vegetables, Greek yogurt, or nuts."
-    )
-
-else:
-    food_recommendation = (
-        "This meal appears relatively balanced in carbohydrates. "
-        "Continue choosing healthy meals that include protein, fiber, and low-sugar ingredients."
-    )
-
-# Insulin recommendation
-insulin_recommendation = (
-    f"Based on your doctor-prescribed insulin-to-carbohydrate ratio "
-    f"(1 unit per {insulin_carb_ratio}g carbs), this meal may require approximately "
-    f"{estimated_meal_insulin} units of insulin. "
-    f"Please follow your physician’s instructions before taking insulin."
-)
-
-st.markdown(
-    f"""
-    <div class="recommendation">
-        <b>Food Recommendation:</b><br>
-        {food_recommendation}
-        <br><br>
-        <b>Insulin Dose Guidance:</b><br>
-        {insulin_recommendation}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+        st.markdown(
+            '<div class="section-card"><div class="section-heading">Dietary Analysis</div>',
+            unsafe_allow_html=True
+        )
 
         if food_img:
             st.image(Image.open(food_img), use_container_width=True)
@@ -803,8 +704,41 @@ st.markdown(
         st.metric("Protein", f"{protein} g")
         st.metric("Fat", f"{fat} g")
 
+        if carbs >= 60:
+            food_recommendation = (
+                "This meal contains a high amount of carbohydrates. "
+                "Consider replacing part of the rice, bread, or pasta with healthier options "
+                "such as grilled chicken, fish, eggs, vegetables, or salad to help maintain more stable glucose levels."
+            )
+        elif carbs >= 30:
+            food_recommendation = (
+                "This meal contains a moderate amount of carbohydrates. "
+                "For better glucose balance, try adding more protein or fiber-rich foods "
+                "such as vegetables, Greek yogurt, or nuts."
+            )
+        else:
+            food_recommendation = (
+                "This meal appears relatively balanced in carbohydrates. "
+                "Continue choosing healthy meals that include protein, fiber, and low-sugar ingredients."
+            )
+
+        insulin_recommendation = (
+            f"Based on your doctor-prescribed insulin-to-carbohydrate ratio "
+            f"(1 unit per {insulin_carb_ratio}g carbs), this meal may require approximately "
+            f"{estimated_meal_insulin} units of insulin. "
+            f"Please follow your physician’s instructions before taking insulin."
+        )
+
         st.markdown(
-            '<div class="recommendation">This meal is high in carbohydrates. Consider balancing it with fiber and protein.</div>',
+            f"""
+            <div class="recommendation">
+                <b>Food Recommendation:</b><br>
+                {food_recommendation}
+                <br><br>
+                <b>Insulin Dose Guidance:</b><br>
+                {insulin_recommendation}
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
@@ -852,7 +786,6 @@ st.markdown(
             st.info("No foot image uploaded.")
 
         st.success("Low Risk: No ulcer indicators found.")
-
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
@@ -870,6 +803,8 @@ st.markdown(
             st.success("No retinal risk warning is detected at this time.")
 
         st.markdown('</div>', unsafe_allow_html=True)
+
+
 # --------------------------------------------------
 # Sidebar Pages
 # --------------------------------------------------
@@ -904,14 +839,15 @@ def profile_page():
     st.write(f"Diabetes Type: {patient.get('type', 'N/A')}")
     st.write(f"Daily Insulin Dose: {patient.get('daily_insulin_dose', 'N/A')} units")
     st.write(
-    f"Insulin-to-Carbohydrate Ratio: "
-    f"1 unit per {patient.get('insulin_carb_ratio', 'N/A')}g carbs"
+        f"Insulin-to-Carbohydrate Ratio: "
+        f"1 unit per {patient.get('insulin_carb_ratio', 'N/A')}g carbs"
     )
 
 
 def settings_page():
     st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
     st.info("Settings can be expanded in future versions of this prototype.")
+
 
 # --------------------------------------------------
 # Routing
