@@ -427,7 +427,22 @@ def login_page():
                 "Diabetes Type",
                 ["Type 1 Diabetes", "Type 2 Diabetes", "Prediabetes"]
             )
+            daily_insulin_dose = st.number_input(
+            "Daily Insulin Dose (units)",
+            min_value=0.0,
+            max_value=200.0,
+            value=0.0,
+            step=0.5
+            )
 
+            insulin_carb_ratio = st.number_input(
+            "Insulin-to-Carbohydrate Ratio (1 unit per X g carbs)",
+            min_value=1.0,
+            max_value=100.0,
+            value=10.0,
+            step=1.0
+            )
+            
             if st.button("Create Account and Continue", use_container_width=True):
                 if name.strip() == "":
                     st.error("Enter your name to continue.")
@@ -441,8 +456,11 @@ def login_page():
                         "email": email,
                         "age": age,
                         "gender": gender,
-                        "type": diabetes_type
+                        "type": diabetes_type,
+                        "daily_insulin_dose": daily_insulin_dose,
+                        "insulin_carb_ratio": insulin_carb_ratio
                     }
+                    
                     st.session_state.logged_in = True
                     st.session_state.page = "upload"
                     st.rerun()
@@ -568,6 +586,14 @@ def dashboard_page():
     foot_img = st.session_state.get("foot_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
+    patient = st.session_state.patient
+
+   daily_insulin_dose = patient.get("daily_insulin_dose", 0)
+
+   insulin_carb_ratio = patient.get("insulin_carb_ratio", 10)
+
+   estimated_meal_insulin = round(carbs / insulin_carb_ratio, 1)
+
     glucose, risk_score, foot_risk = 145, 70, "Low"
 
     if selected_page == "Reports":
@@ -727,10 +753,45 @@ def dashboard_page():
     left, right = st.columns(2)
 
     with left:
-        st.markdown(
-            '<div class="section-card"><div class="section-heading">Dietary Analysis</div>',
-            unsafe_allow_html=True
-        )
+        # Food recommendation
+if carbs >= 60:
+    food_recommendation = (
+        "This meal contains a high amount of carbohydrates. "
+        "Consider replacing part of the rice, bread, or pasta with healthier options such as grilled chicken, fish, eggs, vegetables, or salad to help maintain more stable glucose levels."
+    )
+
+elif carbs >= 30:
+    food_recommendation = (
+        "This meal contains a moderate amount of carbohydrates. "
+        "For better glucose balance, try adding more protein or fiber-rich foods such as vegetables, Greek yogurt, or nuts."
+    )
+
+else:
+    food_recommendation = (
+        "This meal appears relatively balanced in carbohydrates. "
+        "Continue choosing healthy meals that include protein, fiber, and low-sugar ingredients."
+    )
+
+# Insulin recommendation
+insulin_recommendation = (
+    f"Based on your doctor-prescribed insulin-to-carbohydrate ratio "
+    f"(1 unit per {insulin_carb_ratio}g carbs), this meal may require approximately "
+    f"{estimated_meal_insulin} units of insulin. "
+    f"Please follow your physician’s instructions before taking insulin."
+)
+
+st.markdown(
+    f"""
+    <div class="recommendation">
+        <b>Food Recommendation:</b><br>
+        {food_recommendation}
+        <br><br>
+        <b>Insulin Dose Guidance:</b><br>
+        {insulin_recommendation}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
         if food_img:
             st.image(Image.open(food_img), use_container_width=True)
@@ -841,6 +902,11 @@ def profile_page():
     st.write(f"Age: {patient.get('age', 'N/A')}")
     st.write(f"Gender: {patient.get('gender', 'N/A')}")
     st.write(f"Diabetes Type: {patient.get('type', 'N/A')}")
+    st.write(f"Daily Insulin Dose: {patient.get('daily_insulin_dose', 'N/A')} units")
+    st.write(
+    f"Insulin-to-Carbohydrate Ratio: "
+    f"1 unit per {patient.get('insulin_carb_ratio', 'N/A')}g carbs"
+    )
 
 
 def settings_page():
