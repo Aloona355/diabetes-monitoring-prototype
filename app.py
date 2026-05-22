@@ -590,6 +590,16 @@ def upload_page():
     else:
         st.info("Upload at least one file to continue.")
 
+    st.markdown(
+        '<div style="text-align:center; margin-top:14px;">'
+        '<span style="color:#64748b; font-size:14px;">Want to check your wearable data first? </span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    if st.button("Go to Dashboard", use_container_width=False):
+        st.session_state.page = "dashboard"
+        st.rerun()
+
 
 # --------------------------------------------------
 # Dashboard
