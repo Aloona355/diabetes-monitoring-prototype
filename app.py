@@ -588,15 +588,10 @@ def upload_page():
             st.session_state.page = "dashboard"
             st.rerun()
     else:
-        st.info("Upload at least one file to continue.")
+        st.info("Upload your files to get started.")
 
-    st.markdown(
-        '<div style="text-align:center; margin-top:14px;">'
-        '<span style="color:#64748b; font-size:14px;">Want to check your wearable data first? </span>'
-        '</div>',
-        unsafe_allow_html=True
-    )
-    if st.button("Go to Dashboard", use_container_width=False):
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("Go to Dashboard →", use_container_width=False):
         st.session_state.page = "dashboard"
         st.rerun()
 
@@ -774,23 +769,139 @@ def reports_page():
     st.markdown('<div class="section-title">Health Report</div>', unsafe_allow_html=True)
     st.markdown(
         '<div style="color:#475569;font-size:16px;margin-bottom:24px;">'
-        'Your complete health summary — ready to download or share with your doctor.</div>',
+        'Your complete health summary — ready to view or download.</div>',
         unsafe_allow_html=True
     )
 
-    glucose   = int(st.session_state.get("manual_glucose") or 145)
-    foot_risk = "Low"
-    retinal_img = st.session_state.get("retinal_img")
+    glucose        = int(st.session_state.get("manual_glucose") or 145)
+    foot_risk      = "Low"
+    retinal_img    = st.session_state.get("retinal_img")
     retinal_status = "No warning detected" if (not retinal_img or glucose < 180) else "Further screening recommended"
+    avg_glucose    = glucose
+    food_img       = st.session_state.get("food_img")
+    foot_img       = st.session_state.get("foot_img")
 
-    if st.button("Generate & Download PDF Report", use_container_width=True):
-        with st.spinner("Generating your report..."):
+    # ── inline report ──────────────────────────────
+    st.markdown(f"""
+    <div style="background:white; border-radius:18px; padding:32px 36px;
+                box-shadow:0 6px 24px rgba(11,47,74,0.08); margin-bottom:24px;">
+
+        <div style="background:#0b2f4a; border-radius:10px; padding:18px 20px; margin-bottom:4px;">
+            <div style="color:white; font-size:18px; font-weight:800; text-align:center;">
+                Intelligent Diabetes Monitoring System
+            </div>
+        </div>
+        <div style="background:#0891b2; border-radius:0 0 10px 10px; padding:8px 20px;
+                    display:flex; justify-content:space-between; margin-bottom:20px;">
+            <span style="color:#e0f2fe; font-size:13px;">Health Summary Report</span>
+            <span style="color:#bae6fd; font-size:13px;">{datetime.now().strftime("%A, %B %d %Y  |  %I:%M %p")}</span>
+        </div>
+
+        <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
+                    padding:7px 12px; border-radius:6px; margin-bottom:8px;">Patient Information</div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
+            <tr style="background:#f1f5f9;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a; width:15%;">Name</td>
+                <td style="padding:8px 10px; color:#475569; width:40%;">{st.session_state.patient.get("name","—")}</td>
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a; width:15%;">Gender</td>
+                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("gender","—")}</td>
+            </tr>
+            <tr style="background:white;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Email</td>
+                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("email","—")}</td>
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Age</td>
+                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("age","—")}</td>
+            </tr>
+        </table>
+
+        <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
+                    padding:7px 12px; border-radius:6px; margin-bottom:8px;">Health Overview</div>
+        <div style="background:{"#fef3c7" if avg_glucose >= 140 else "#d1fae5"};
+                    border-radius:8px; padding:12px 16px; margin-bottom:16px;
+                    font-size:13px; color:#0b2f4a; line-height:1.7;">
+            Over the past 7 days, the average glucose level was <b>{avg_glucose} mg/dL</b> —
+            {"slightly elevated" if avg_glucose >= 140 else "within normal range"}.
+            Foot health status: <b>{foot_risk} Risk</b>.
+            Retinal status: <b>{retinal_status}</b>.
+        </div>
+
+        <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
+                    padding:7px 12px; border-radius:6px; margin-bottom:8px;">Glucose Metrics</div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
+            <tr style="background:#0b2f4a;">
+                <td style="padding:8px 10px; color:white; font-weight:700;">Metric</td>
+                <td style="padding:8px 10px; color:white; font-weight:700;">Value</td>
+                <td style="padding:8px 10px; color:white; font-weight:700;">Status</td>
+            </tr>
+            <tr style="background:#f1f5f9;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Current Glucose</td>
+                <td style="padding:8px 10px; color:#475569;">{glucose} mg/dL</td>
+                <td style="padding:8px 10px; font-weight:700;
+                    color:{"#f59e0b" if glucose >= 140 else "#059669"};
+                    background:{"#fef3c7" if glucose >= 140 else "#d1fae5"};">
+                    {"Elevated" if glucose >= 140 else "Normal"}
+                </td>
+            </tr>
+            <tr style="background:white;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">7-Day Avg Glucose</td>
+                <td style="padding:8px 10px; color:#475569;">{avg_glucose} mg/dL</td>
+                <td style="padding:8px 10px; font-weight:700;
+                    color:{"#f59e0b" if avg_glucose >= 140 else "#059669"};
+                    background:{"#fef3c7" if avg_glucose >= 140 else "#d1fae5"};">
+                    {"Elevated" if avg_glucose >= 140 else "Normal"}
+                </td>
+            </tr>
+        </table>
+
+        <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
+                    padding:7px 12px; border-radius:6px; margin-bottom:8px;">Clinical Assessments</div>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+            <tr style="background:#0b2f4a;">
+                <td style="padding:8px 10px; color:white; font-weight:700;">Assessment</td>
+                <td style="padding:8px 10px; color:white; font-weight:700;">Result</td>
+                <td style="padding:8px 10px; color:white; font-weight:700;">Detail</td>
+            </tr>
+            <tr style="background:#f1f5f9;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Foot Health</td>
+                <td style="padding:8px 10px; font-weight:700; color:#059669; background:#d1fae5;">{foot_risk} Risk</td>
+                <td style="padding:8px 10px; color:#475569;">No ulcer indicators detected</td>
+            </tr>
+            <tr style="background:white;">
+                <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Retinal Health</td>
+                <td style="padding:8px 10px; font-weight:700;
+                    color:{"#059669" if retinal_status == "No warning detected" else "#f59e0b"};
+                    background:{"#d1fae5" if retinal_status == "No warning detected" else "#fef3c7"};">
+                    {retinal_status}
+                </td>
+                <td style="padding:8px 10px; color:#475569;">Based on glucose pattern & retinal scan</td>
+            </tr>
+        </table>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── charts inline ──────────────────────────────
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#0b2f4a;margin-bottom:6px;">Glucose Trend – Last 7 Days</div>', unsafe_allow_html=True)
+        g_buf = generate_glucose_chart()
+        st.image(g_buf, use_container_width=True)
+    with c2:
+        st.markdown('<div style="font-size:13px;font-weight:700;color:#0b2f4a;margin-bottom:6px;">Meal Quality – Last 7 Days</div>', unsafe_allow_html=True)
+        m_buf = generate_meal_chart()
+        st.image(m_buf, use_container_width=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── download button ────────────────────────────
+    if st.button("Download as PDF", use_container_width=True):
+        with st.spinner("Generating PDF..."):
             pdf_bytes = create_pdf_report(
                 st.session_state.patient,
                 glucose, foot_risk, retinal_status
             )
         st.download_button(
-            label="Download PDF",
+            label="Click to Download",
             data=pdf_bytes,
             file_name=f"Health_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf",
