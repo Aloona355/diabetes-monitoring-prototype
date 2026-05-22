@@ -506,7 +506,7 @@ def upload_page():
         unsafe_allow_html=True
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
         st.markdown('<div class="card"><div class="card-title">Meal Image</div>'
@@ -516,32 +516,24 @@ def upload_page():
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="card"><div class="card-title">Wearable Device Data</div>'
-                    '<div style="color:#475569;margin-bottom:15px;">Upload wearable data in CSV format.</div>',
-                    unsafe_allow_html=True)
-        wearable_csv = st.file_uploader("", type=["csv"], key="wearable_upload", label_visibility="hidden")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col3:
         st.markdown('<div class="card"><div class="card-title">Foot Assessment Image</div>'
                     '<div style="color:#475569;margin-bottom:15px;">Upload a clear foot image for risk assessment.</div>',
                     unsafe_allow_html=True)
         foot_img = st.file_uploader("", type=["jpg","jpeg","png"], key="foot_upload", label_visibility="hidden")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.session_state.food_img    = food_img
-    st.session_state.wearable_csv = wearable_csv
-    st.session_state.foot_img    = foot_img
+    st.session_state.food_img = food_img
+    st.session_state.foot_img = foot_img
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if food_img and wearable_csv and foot_img:
+    if food_img and foot_img:
         st.success("All files uploaded successfully.")
         if st.button("Start AI Analysis", use_container_width=True):
             st.session_state.page = "dashboard"
             st.rerun()
     else:
-        st.info("Upload the meal image, wearable data file, and foot image to continue.")
+        st.info("Upload the meal image and foot image to continue.")
 
 
 # --------------------------------------------------
@@ -557,29 +549,18 @@ def dashboard_page():
     if selected_page == "Settings":     settings_page();     return
 
     food_img     = st.session_state.get("food_img")
-    wearable_csv = st.session_state.get("wearable_csv")
     foot_img     = st.session_state.get("foot_img")
     retinal_img  = st.session_state.get("retinal_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
     glucose   = 145
     foot_risk = "Low"
-    now       = datetime.now()
 
     st.markdown(
         f"""
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;
-                    margin-bottom:10px;flex-wrap:wrap;gap:10px;">
-            <div>
-                <div class="dashboard-title">Your Health Analysis Summary</div>
-                <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name","Patient")}</div>
-            </div>
-            <div style="background:white;border-radius:14px;padding:12px 20px;
-                        border:1px solid #e2e8f0;box-shadow:0 4px 12px rgba(11,47,74,0.06);text-align:right;">
-                <div style="color:#64748b;font-size:12px;font-weight:600;">Analysis Time</div>
-                <div style="color:#0b2f4a;font-size:18px;font-weight:800;">{now.strftime("%I:%M %p")}</div>
-                <div style="color:#64748b;font-size:12px;">{now.strftime("%A, %B %d %Y")}</div>
-            </div>
+        <div style="margin-bottom:10px;">
+            <div class="dashboard-title">Your Health Analysis Summary</div>
+            <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name","Patient")}</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -621,16 +602,17 @@ def dashboard_page():
 
     with right:
         st.markdown('<div class="section-card"><div class="section-heading">Wearable Data Analysis</div>', unsafe_allow_html=True)
-        if wearable_csv:
-            wearable_data = pd.read_csv(wearable_csv)
-            st.dataframe(wearable_data.head(), use_container_width=True)
-        else:
-            sample_data = pd.DataFrame({
-                "Time":             ["10:00 AM", "11:00 AM", "12:00 PM"],
-                "Heart Rate":       [72, 80, 76],
-                "Glucose Estimate": [120, 132, 145]
-            })
-            st.dataframe(sample_data, use_container_width=True)
+        now = datetime.now()
+        auto_data = pd.DataFrame({
+            "Time":             [
+                (now.replace(hour=max(0,now.hour-2), minute=0)).strftime("%I:%M %p"),
+                (now.replace(hour=max(0,now.hour-1), minute=0)).strftime("%I:%M %p"),
+                now.strftime("%I:%M %p"),
+            ],
+            "Heart Rate":       [72, 80, 76],
+            "Glucose Estimate": [132, 138, glucose]
+        })
+        st.dataframe(auto_data, use_container_width=True)
         st.line_chart([120, 132, 145, 138, 149])
         st.markdown('</div>', unsafe_allow_html=True)
 
