@@ -87,7 +87,7 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         pagesize=A4,
         rightMargin=2*cm,
         leftMargin=2*cm,
-        topMargin=2*cm,
+        topMargin=1.5*cm,
         bottomMargin=2*cm
     )
 
@@ -95,175 +95,240 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     teal   = colors.HexColor("#0891b2")
     slate  = colors.HexColor("#475569")
     light  = colors.HexColor("#f1f5f9")
+    teal_light = colors.HexColor("#e0f2fe")
     green  = colors.HexColor("#059669")
+    green_light = colors.HexColor("#d1fae5")
     amber  = colors.HexColor("#f59e0b")
-    red    = colors.HexColor("#ef4444")
+    amber_light = colors.HexColor("#fef3c7")
     white  = colors.white
-
-    styles = getSampleStyleSheet()
 
     def style(name, **kw):
         return ParagraphStyle(name, **kw)
 
-    title_style    = style("Title",    fontName="Helvetica-Bold", fontSize=20, textColor=navy,  alignment=TA_CENTER, spaceAfter=4)
-    sub_style      = style("Sub",      fontName="Helvetica",      fontSize=12, textColor=slate, alignment=TA_CENTER, spaceAfter=2)
-    date_style     = style("Date",     fontName="Helvetica",      fontSize=9,  textColor=slate, alignment=TA_CENTER, spaceAfter=12)
-    section_style  = style("Section",  fontName="Helvetica-Bold", fontSize=13, textColor=navy,  spaceBefore=14, spaceAfter=6)
-    body_style     = style("Body",     fontName="Helvetica",      fontSize=10, textColor=slate, leading=16)
-    label_style    = style("Label",    fontName="Helvetica-Bold", fontSize=10, textColor=navy)
-    small_style    = style("Small",    fontName="Helvetica-Oblique", fontSize=8, textColor=slate, alignment=TA_CENTER)
-    rec_style      = style("Rec",      fontName="Helvetica",      fontSize=10, textColor=navy,  leading=18)
+    title_style   = style("T1", fontName="Helvetica-Bold",    fontSize=22, textColor=white,  alignment=TA_CENTER, spaceAfter=2)
+    sub_style     = style("T2", fontName="Helvetica",          fontSize=11, textColor=colors.HexColor("#bae6fd"), alignment=TA_CENTER, spaceAfter=0)
+    date_style    = style("T3", fontName="Helvetica",          fontSize=9,  textColor=colors.HexColor("#93c5fd"), alignment=TA_CENTER, spaceAfter=0)
+    section_style = style("S1", fontName="Helvetica-Bold",     fontSize=12, textColor=navy,  spaceBefore=12, spaceAfter=5,
+                          borderPad=4, leftIndent=0)
+    body_style    = style("B1", fontName="Helvetica",          fontSize=10, textColor=slate, leading=16)
+    small_style   = style("SM", fontName="Helvetica-Oblique",  fontSize=8,  textColor=slate, alignment=TA_CENTER)
+    rec_style     = style("RC", fontName="Helvetica",          fontSize=10, textColor=colors.HexColor("#1e3a5f"), leading=18)
 
     story = []
-    W = A4[0] - 4*cm  # usable width
+    W = A4[0] - 4*cm
 
-    # ── HEADER ──────────────────────────────────────────
-    story.append(Paragraph("Intelligent Diabetes Monitoring System", title_style))
-    story.append(Paragraph("Health Summary Report", sub_style))
-    story.append(Paragraph(f"Generated: {datetime.now().strftime('%A, %B %d %Y  |  %I:%M %p')}", date_style))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Spacer(1, 10))
+    # ── HEADER BANNER ───────────────────────────────────
+    header_data = [[
+        Paragraph("Intelligent Diabetes Monitoring System", title_style),
+    ]]
+    header_table = Table(header_data, colWidths=[W])
+    header_table.setStyle(TableStyle([
+        ("BACKGROUND",  (0,0), (-1,-1), navy),
+        ("TOPPADDING",  (0,0), (-1,-1), 18),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 6),
+        ("LEFTPADDING", (0,0), (-1,-1), 12),
+        ("RIGHTPADDING",(0,0), (-1,-1), 12),
+        ("ROUNDEDCORNERS", [8]),
+    ]))
+    story.append(header_table)
+
+    sub_data = [[
+        Paragraph("Health Summary Report", sub_style),
+        Paragraph(datetime.now().strftime("%A, %B %d %Y  |  %I:%M %p"), date_style),
+    ]]
+    sub_table = Table(sub_data, colWidths=[W*0.5, W*0.5])
+    sub_table.setStyle(TableStyle([
+        ("BACKGROUND",   (0,0), (-1,-1), teal),
+        ("TOPPADDING",   (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("LEFTPADDING",  (0,0), (-1,-1), 12),
+        ("RIGHTPADDING", (0,0), (-1,-1), 12),
+        ("ALIGN",        (1,0), (1,0),   "RIGHT"),
+    ]))
+    story.append(sub_table)
+    story.append(Spacer(1, 14))
 
     # ── PATIENT INFO ────────────────────────────────────
-    story.append(Paragraph("Patient Information", section_style))
+    def section_header(text):
+        data = [[Paragraph(text, style("SH", fontName="Helvetica-Bold", fontSize=11,
+                                       textColor=white, spaceAfter=0))]]
+        t = Table(data, colWidths=[W])
+        t.setStyle(TableStyle([
+            ("BACKGROUND",   (0,0), (-1,-1), teal),
+            ("TOPPADDING",   (0,0), (-1,-1), 7),
+            ("BOTTOMPADDING",(0,0), (-1,-1), 7),
+            ("LEFTPADDING",  (0,0), (-1,-1), 10),
+            ("ROUNDEDCORNERS", [4]),
+        ]))
+        return t
+
+    story.append(section_header("Patient Information"))
+    story.append(Spacer(1, 4))
+
     info_data = [
-        ["Name",   patient.get("name",   "—"), "Gender", patient.get("gender", "—")],
-        ["Email",  patient.get("email",  "—"), "Age",    str(patient.get("age", "—"))],
+        [Paragraph("<b>Name</b>",   style("i", fontName="Helvetica-Bold", fontSize=10, textColor=navy)),
+         Paragraph(patient.get("name","—"),   style("i", fontName="Helvetica", fontSize=10, textColor=slate)),
+         Paragraph("<b>Gender</b>", style("i", fontName="Helvetica-Bold", fontSize=10, textColor=navy)),
+         Paragraph(patient.get("gender","—"), style("i", fontName="Helvetica", fontSize=10, textColor=slate))],
+        [Paragraph("<b>Email</b>",  style("i", fontName="Helvetica-Bold", fontSize=10, textColor=navy)),
+         Paragraph(patient.get("email","—"),  style("i", fontName="Helvetica", fontSize=10, textColor=slate)),
+         Paragraph("<b>Age</b>",    style("i", fontName="Helvetica-Bold", fontSize=10, textColor=navy)),
+         Paragraph(str(patient.get("age","—")), style("i", fontName="Helvetica", fontSize=10, textColor=slate))],
     ]
-    info_table = Table(info_data, colWidths=[3*cm, 7.5*cm, 3*cm, 3.5*cm])
+    info_table = Table(info_data, colWidths=[2.5*cm, 7.5*cm, 2.5*cm, 4.5*cm])
     info_table.setStyle(TableStyle([
-        ("BACKGROUND", (0,0), (-1,-1), light),
-        ("TEXTCOLOR",  (0,0), (0,-1), navy),
-        ("TEXTCOLOR",  (2,0), (2,-1), navy),
-        ("FONTNAME",   (0,0), (0,-1), "Helvetica-Bold"),
-        ("FONTNAME",   (2,0), (2,-1), "Helvetica-Bold"),
-        ("FONTNAME",   (1,0), (1,-1), "Helvetica"),
-        ("FONTNAME",   (3,0), (3,-1), "Helvetica"),
-        ("FONTSIZE",   (0,0), (-1,-1), 10),
-        ("TEXTCOLOR",  (1,0), (1,-1), slate),
-        ("TEXTCOLOR",  (3,0), (3,-1), slate),
         ("ROWBACKGROUNDS", (0,0), (-1,-1), [light, white]),
         ("GRID",       (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("PADDING",    (0,0), (-1,-1), 8),
-        ("ROUNDEDCORNERS", [6]),
+        ("TOPPADDING", (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0),(-1,-1), 8),
+        ("LEFTPADDING",(0,0),(-1,-1), 10),
     ]))
     story.append(info_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 12))
 
-    # ── QUICK SUMMARY ───────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Health Overview", section_style))
+    # ── HEALTH OVERVIEW ─────────────────────────────────
+    story.append(section_header("Health Overview"))
+    story.append(Spacer(1, 6))
 
-    avg_glucose = 142
+    avg_glucose    = st.session_state.get("manual_glucose", glucose)
     glucose_status = "slightly elevated" if avg_glucose >= 140 else "within normal range"
-    summary_text = (
+    summary_text   = (
         f"Over the past 7 days, the average glucose level was <b>{avg_glucose} mg/dL</b> — {glucose_status}. "
         f"Most recent reading: <b>{glucose} mg/dL</b>. "
-        f"Meal analysis shows a combination of healthy and high-carbohydrate meals across the period. "
+        f"Meal analysis shows a combination of healthy and high-carbohydrate meals. "
         f"Foot health status: <b>{foot_risk} Risk</b>. "
         f"Retinal status: <b>{retinal_status}</b>."
     )
-    story.append(Paragraph(summary_text, body_style))
-    story.append(Spacer(1, 10))
 
-    # ── GLUCOSE METRICS ─────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Glucose & Nutrition Metrics", section_style))
+    summary_bg = amber_light if avg_glucose >= 140 else green_light
+    summary_data = [[Paragraph(summary_text, style("SB", fontName="Helvetica", fontSize=10,
+                                                    textColor=navy, leading=16))]]
+    summary_table = Table(summary_data, colWidths=[W])
+    summary_table.setStyle(TableStyle([
+        ("BACKGROUND",   (0,0), (-1,-1), summary_bg),
+        ("TOPPADDING",   (0,0), (-1,-1), 10),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 10),
+        ("LEFTPADDING",  (0,0), (-1,-1), 12),
+        ("RIGHTPADDING", (0,0), (-1,-1), 12),
+        ("ROUNDEDCORNERS", [6]),
+        ("BOX", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+    ]))
+    story.append(summary_table)
+    story.append(Spacer(1, 12))
+
+    # ── GLUCOSE & NUTRITION METRICS ─────────────────────
+    story.append(section_header("Glucose & Nutrition Metrics"))
+    story.append(Spacer(1, 4))
+
+    def status_color(val):
+        if val in ("Elevated", "High"):  return amber
+        if val == "Normal":              return green
+        return slate
+
+    def status_bg(val):
+        if val in ("Elevated", "High"):  return amber_light
+        if val == "Normal":              return green_light
+        return white
 
     metrics_data = [
         ["Metric", "Value", "Status"],
-        ["Current Glucose",  f"{glucose} mg/dL",  "Elevated" if glucose >= 140 else "Normal"],
-        ["7-Day Avg Glucose",f"{avg_glucose} mg/dL","Elevated" if avg_glucose >= 140 else "Normal"],
-        ["Meal Calories",    f"{calories} kcal",   "—"],
-        ["Carbohydrates",    f"{carbs} g",          "High" if carbs > 60 else "Normal"],
-        ["Protein",          f"{protein} g",        "Normal"],
-        ["Fat",              f"{fat} g",            "Normal"],
+        ["Current Glucose",   f"{glucose} mg/dL",    "Elevated" if glucose >= 140 else "Normal"],
+        ["7-Day Avg Glucose", f"{avg_glucose} mg/dL", "Elevated" if avg_glucose >= 140 else "Normal"],
+        ["Meal Calories",     f"{calories} kcal",     "—"],
+        ["Carbohydrates",     f"{carbs} g",           "High" if carbs > 60 else "Normal"],
+        ["Protein",           f"{protein} g",         "Normal"],
+        ["Fat",               f"{fat} g",             "Normal"],
     ]
 
-    def status_color(val):
-        if val in ("Elevated", "High"):   return amber
-        if val == "Normal":               return green
-        return slate
-
-    metrics_table = Table(metrics_data, colWidths=[6*cm, 5*cm, 6*cm])
     ts = [
-        ("BACKGROUND",  (0,0), (-1,0),  navy),
-        ("TEXTCOLOR",   (0,0), (-1,0),  white),
-        ("FONTNAME",    (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",    (0,0), (-1,-1), 10),
-        ("FONTNAME",    (0,1), (0,-1),  "Helvetica-Bold"),
-        ("TEXTCOLOR",   (0,1), (0,-1),  navy),
-        ("FONTNAME",    (1,1), (1,-1),  "Helvetica"),
-        ("TEXTCOLOR",   (1,1), (1,-1),  slate),
-        ("ROWBACKGROUNDS", (0,1), (-1,-1), [light, white]),
-        ("GRID",        (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("PADDING",     (0,0), (-1,-1), 8),
-        ("ALIGN",       (0,0), (-1,-1), "LEFT"),
+        ("BACKGROUND",   (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",    (0,0), (-1,0),  white),
+        ("FONTNAME",     (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",     (0,0), (-1,-1), 10),
+        ("FONTNAME",     (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",    (0,1), (0,-1),  navy),
+        ("FONTNAME",     (1,1), (1,-1),  "Helvetica"),
+        ("TEXTCOLOR",    (1,1), (1,-1),  slate),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1), [light, white]),
+        ("GRID",         (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING",   (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("LEFTPADDING",  (0,0), (-1,-1), 10),
+        ("ALIGN",        (0,0), (-1,-1), "LEFT"),
     ]
     for row_idx, row in enumerate(metrics_data[1:], start=1):
         sc = status_color(row[2])
-        ts.append(("TEXTCOLOR", (2, row_idx), (2, row_idx), sc))
-        ts.append(("FONTNAME",  (2, row_idx), (2, row_idx), "Helvetica-Bold"))
+        sb = status_bg(row[2])
+        ts.append(("TEXTCOLOR",  (2, row_idx), (2, row_idx), sc))
+        ts.append(("FONTNAME",   (2, row_idx), (2, row_idx), "Helvetica-Bold"))
+        ts.append(("BACKGROUND", (2, row_idx), (2, row_idx), sb))
+
+    metrics_table = Table(metrics_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     metrics_table.setStyle(TableStyle(ts))
     story.append(metrics_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 12))
 
     # ── GLUCOSE CHART ───────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Glucose Trend – Last 7 Days", section_style))
+    story.append(section_header("Glucose Trend – Last 7 Days"))
+    story.append(Spacer(1, 6))
     g_buf = generate_glucose_chart()
-    g_img = RLImage(g_buf, width=W, height=W*0.38)
-    story.append(g_img)
-    story.append(Spacer(1, 8))
+    story.append(RLImage(g_buf, width=W, height=W * 0.38))
+    story.append(Spacer(1, 12))
 
     # ── MEAL CHART ──────────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Meal Quality – Last 7 Days", section_style))
+    story.append(section_header("Meal Quality – Last 7 Days"))
+    story.append(Spacer(1, 6))
     m_buf = generate_meal_chart()
-    m_img = RLImage(m_buf, width=W*0.65, height=W*0.38)
-    story.append(m_img)
-    story.append(Spacer(1, 8))
+    story.append(RLImage(m_buf, width=W * 0.65, height=W * 0.38))
+    story.append(Spacer(1, 12))
 
     # ── CLINICAL ASSESSMENTS ────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Clinical Assessments", section_style))
+    story.append(section_header("Clinical Assessments"))
+    story.append(Spacer(1, 4))
 
-    foot_color   = green if foot_risk == "Low" else amber
-    retinal_color = green if retinal_status == "No warning detected" else amber
+    foot_c    = green if foot_risk == "Low" else amber
+    foot_bg   = green_light if foot_risk == "Low" else amber_light
+    ret_c     = green if retinal_status == "No warning detected" else amber
+    ret_bg    = green_light if retinal_status == "No warning detected" else amber_light
 
     assess_data = [
-        ["Assessment",      "Result",          "Detail"],
-        ["Foot Health",     f"{foot_risk} Risk", "No ulcer indicators detected"],
-        ["Retinal Health",  retinal_status,      "Based on uploaded scan & glucose pattern"],
+        ["Assessment", "Result", "Detail"],
+        ["Foot Health",    f"{foot_risk} Risk",  "No ulcer indicators detected"],
+        ["Retinal Health", retinal_status,        "Based on glucose pattern & retinal scan"],
     ]
     assess_ts = [
-        ("BACKGROUND",  (0,0), (-1,0),  navy),
-        ("TEXTCOLOR",   (0,0), (-1,0),  white),
-        ("FONTNAME",    (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",    (0,0), (-1,-1), 10),
-        ("FONTNAME",    (0,1), (0,-1),  "Helvetica-Bold"),
-        ("TEXTCOLOR",   (0,1), (0,-1),  navy),
-        ("ROWBACKGROUNDS", (0,1), (-1,-1), [light, white]),
-        ("GRID",        (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("PADDING",     (0,0), (-1,-1), 8),
-        ("TEXTCOLOR",   (1,1), (1,1),   foot_color),
-        ("FONTNAME",    (1,1), (1,1),   "Helvetica-Bold"),
-        ("TEXTCOLOR",   (1,2), (1,2),   retinal_color),
-        ("FONTNAME",    (1,2), (1,2),   "Helvetica-Bold"),
-        ("TEXTCOLOR",   (2,1), (2,-1),  slate),
+        ("BACKGROUND",   (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",    (0,0), (-1,0),  white),
+        ("FONTNAME",     (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",     (0,0), (-1,-1), 10),
+        ("FONTNAME",     (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",    (0,1), (0,-1),  navy),
+        ("TEXTCOLOR",    (2,1), (2,-1),  slate),
+        ("FONTNAME",     (2,1), (2,-1),  "Helvetica"),
+        ("ROWBACKGROUNDS",(0,1),(-1,-1), [light, white]),
+        ("GRID",         (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING",   (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("LEFTPADDING",  (0,0), (-1,-1), 10),
+        ("TEXTCOLOR",    (1,1), (1,1),   foot_c),
+        ("FONTNAME",     (1,1), (1,1),   "Helvetica-Bold"),
+        ("BACKGROUND",   (1,1), (1,1),   foot_bg),
+        ("TEXTCOLOR",    (1,2), (1,2),   ret_c),
+        ("FONTNAME",     (1,2), (1,2),   "Helvetica-Bold"),
+        ("BACKGROUND",   (1,2), (1,2),   ret_bg),
     ]
-    assess_table = Table(assess_data, colWidths=[5*cm, 5*cm, 7*cm])
+    assess_table = Table(assess_data, colWidths=[4.5*cm, 5*cm, 7.5*cm])
     assess_table.setStyle(TableStyle(assess_ts))
     story.append(assess_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 12))
 
     # ── RECOMMENDATIONS ─────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
-    story.append(Paragraph("Recommendations", section_style))
+    story.append(section_header("Recommendations"))
+    story.append(Spacer(1, 6))
 
     recs = []
     if avg_glucose >= 140:
-        recs.append("Glucose levels are slightly elevated. Consider reducing refined carbohydrate intake and monitor post-meal readings.")
+        recs.append("Glucose levels are slightly elevated. Consider reducing refined carbohydrate intake and monitor post-meal readings closely.")
     if carbs > 60:
         recs.append("Carbohydrate intake is above the recommended range. Aim for balanced meals with fiber and lean protein.")
     if foot_risk == "Low":
@@ -275,19 +340,35 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     else:
         recs.append("Retinal screening is recommended. Please arrange an appointment with an ophthalmologist promptly.")
 
-    for i, rec in enumerate(recs, 1):
-        story.append(Paragraph(f"{i}.  {rec}", rec_style))
-
+    rec_rows = [[Paragraph(f"{i}. {rec}", rec_style)] for i, rec in enumerate(recs, 1)]
+    rec_table = Table(rec_rows, colWidths=[W])
+    rec_table.setStyle(TableStyle([
+        ("BACKGROUND",   (0,0), (-1,-1), teal_light),
+        ("TOPPADDING",   (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("LEFTPADDING",  (0,0), (-1,-1), 14),
+        ("RIGHTPADDING", (0,0), (-1,-1), 12),
+        ("ROWBACKGROUNDS",(0,0),(-1,-1), [teal_light, colors.HexColor("#f0f9ff")]),
+        ("BOX",          (0,0), (-1,-1), 0.5, teal),
+    ]))
+    story.append(rec_table)
     story.append(Spacer(1, 16))
 
     # ── FOOTER ──────────────────────────────────────────
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0")))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph(
+    footer_data = [[Paragraph(
         "This report is generated by an AI-assisted prototype and is not a substitute for professional medical advice. "
         "Always consult a qualified healthcare provider for diagnosis and treatment.",
         small_style
-    ))
+    )]]
+    footer_table = Table(footer_data, colWidths=[W])
+    footer_table.setStyle(TableStyle([
+        ("BACKGROUND",   (0,0), (-1,-1), light),
+        ("TOPPADDING",   (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("LEFTPADDING",  (0,0), (-1,-1), 10),
+        ("BOX",          (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+    ]))
+    story.append(footer_table)
 
     doc.build(story)
     buf.seek(0)
@@ -603,17 +684,35 @@ def dashboard_page():
     with right:
         st.markdown('<div class="section-card"><div class="section-heading">Wearable Data Analysis</div>', unsafe_allow_html=True)
         now = datetime.now()
+
+        # Use manual glucose if entered, else default
+        display_glucose = st.session_state.get("manual_glucose", glucose)
+
         auto_data = pd.DataFrame({
-            "Time":             [
-                (now.replace(hour=max(0,now.hour-2), minute=0)).strftime("%I:%M %p"),
-                (now.replace(hour=max(0,now.hour-1), minute=0)).strftime("%I:%M %p"),
+            "Time": [
+                now.replace(hour=max(0, now.hour - 2), minute=0).strftime("%I:%M %p"),
+                now.replace(hour=max(0, now.hour - 1), minute=0).strftime("%I:%M %p"),
                 now.strftime("%I:%M %p"),
             ],
             "Heart Rate":       [72, 80, 76],
-            "Glucose Estimate": [132, 138, glucose]
+            "Glucose Estimate": [132, 138, display_glucose]
         })
         st.dataframe(auto_data, use_container_width=True)
-        st.line_chart([120, 132, 145, 138, 149])
+        st.line_chart([120, 132, 138, display_glucose])
+
+        # Manual entry toggle
+        with st.expander("Not sure about the readings? Enter manually"):
+            manual_val = st.number_input(
+                "Enter your current glucose reading (mg/dL)",
+                min_value=40, max_value=600,
+                value=int(display_glucose),
+                step=1,
+                key="manual_glucose_input"
+            )
+            if st.button("Update Reading", key="update_glucose_btn"):
+                st.session_state.manual_glucose = manual_val
+                st.rerun()
+
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
@@ -631,16 +730,10 @@ def dashboard_page():
 
     with col2:
         st.markdown('<div class="section-card"><div class="section-heading">Retinal Health</div>', unsafe_allow_html=True)
-        if retinal_img:
-            st.image(Image.open(retinal_img), use_container_width=True)
-            if glucose >= 180:
-                st.warning("Elevated glucose levels detected. Retinal screening is recommended.")
-            else:
-                st.success("No retinal risk warning detected at this time.")
+        if glucose >= 180:
+            st.warning("Elevated glucose levels detected. Retinal screening is recommended. Please consult an ophthalmologist.")
         else:
-            # Only show warning if glucose is high, otherwise show nothing
-            if glucose >= 180:
-                st.warning("Elevated glucose levels detected. Retinal screening is recommended.")
+            st.success("No retinal risk warning detected at this time.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 
