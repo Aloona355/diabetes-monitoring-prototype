@@ -15,7 +15,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Image as RLImage,
-    HRFlowable, Table, TableStyle
+    HRFlowable, Table, TableStyle, KeepTogether, PageBreak
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
@@ -450,7 +450,7 @@ label { color: #0B2F4A !important; font-weight: 700 !important; }
 for key, default in [
     ("logged_in", False), ("page", "login"),
     ("patient", {}), ("auth_mode", "login"),
-    ("retinal_img", None),
+    ("retinal_img", None), ("manual_glucose", None),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
@@ -634,7 +634,7 @@ def dashboard_page():
     retinal_img  = st.session_state.get("retinal_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
-    glucose   = 145
+    glucose   = st.session_state.get("manual_glucose") or 145
     foot_risk = "Low"
 
     st.markdown(
