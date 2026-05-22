@@ -798,9 +798,12 @@ def reports_page():
     ret_color        = "#059669" if retinal_status == "No warning detected" else "#f59e0b"
     ret_bg           = "#d1fae5" if retinal_status == "No warning detected" else "#fef3c7"
 
-    st.markdown(f"""
+    import streamlit.components.v1 as components
+
+    html_report = f"""
     <div style="background:white; border-radius:18px; padding:32px 36px;
-                box-shadow:0 6px 24px rgba(11,47,74,0.08); margin-bottom:24px;">
+                box-shadow:0 6px 24px rgba(11,47,74,0.08); margin-bottom:24px;
+                font-family: Arial, sans-serif;">
 
         <div style="background:#0b2f4a; border-radius:10px 10px 0 0; padding:18px 20px;">
             <div style="color:white; font-size:18px; font-weight:800; text-align:center;">
@@ -878,9 +881,9 @@ def reports_page():
                 <td style="padding:8px 10px; color:#475569;">Based on glucose pattern</td>
             </tr>
         </table>
-
     </div>
-    """, unsafe_allow_html=True)
+    """
+    components.html(html_report, height=600, scrolling=True)
 
     # ── charts inline ──────────────────────────────
     c1, c2 = st.columns(2)
