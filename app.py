@@ -1,33 +1,38 @@
 import streamlit as st
 import pandas as pd
 from PIL import Image
-from fpdf import FPDF
 from datetime import datetime
 import base64
-import random
 from streamlit_option_menu import option_menu
+import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import io
+
+# ReportLab imports
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image as RLImage,
+    HRFlowable, Table, TableStyle
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
 
 LOGO = "IMG_5991.png"
-
 
 # --------------------------------------------------
 # Helpers
 # --------------------------------------------------
 def get_base64_logo():
     try:
-        with open(LOGO, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode()
+        with open(LOGO, "rb") as f:
+            return base64.b64encode(f.read()).decode()
     except:
         return ""
-
-def clean_pdf_text(text):
-    return str(text).encode("latin-1", "ignore").decode("latin-1")
 
 
 def generate_glucose_chart():
@@ -41,11 +46,10 @@ def generate_glucose_chart():
     ax.set_ylabel("mg/dL", fontsize=10)
     ax.set_title("Glucose Levels – Last 7 Days", fontsize=12, fontweight='bold', color='#0b2f4a')
     ax.legend(fontsize=9)
-    ax.set_facecolor('#f8fbfd')
-    fig.patch.set_facecolor('#f8fbfd')
+    ax.set_facecolor('#ffffff')
+    fig.patch.set_facecolor('#ffffff')
     ax.tick_params(axis='x', labelsize=8)
     plt.tight_layout()
-
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
@@ -54,22 +58,21 @@ def generate_glucose_chart():
 
 
 def generate_meal_chart():
-    categories = ["Healthy\nMeals", "High Carb\nMeals", "High Fat\nMeals", "Balanced\nMeals"]
+    categories = ["Healthy", "High Carb", "High Fat", "Balanced"]
     values = [8, 5, 3, 5]
-    colors = ['#059669', '#f59e0b', '#ef4444', '#0891b2']
+    bar_colors = ['#059669', '#f59e0b', '#ef4444', '#0891b2']
 
-    fig, ax = plt.subplots(figsize=(5, 4))
-    bars = ax.bar(categories, values, color=colors, width=0.5, edgecolor='white', linewidth=1.5)
-    ax.set_ylabel("Number of Meals", fontsize=10)
+    fig, ax = plt.subplots(figsize=(5, 3.5))
+    bars = ax.bar(categories, values, color=bar_colors, width=0.5, edgecolor='white', linewidth=1.5)
+    ax.set_ylabel("Meals", fontsize=10)
     ax.set_title("Meal Quality – Last 7 Days", fontsize=12, fontweight='bold', color='#0b2f4a')
-    ax.set_facecolor('#f8fbfd')
-    fig.patch.set_facecolor('#f8fbfd')
-    ax.tick_params(axis='x', labelsize=8)
+    ax.set_facecolor('#ffffff')
+    fig.patch.set_facecolor('#ffffff')
+    ax.tick_params(axis='x', labelsize=9)
     for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1, str(val),
-                ha='center', va='bottom', fontsize=9, fontweight='bold', color='#0b2f4a')
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
+                str(val), ha='center', va='bottom', fontsize=9, fontweight='bold', color='#0b2f4a')
     plt.tight_layout()
-
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
@@ -77,113 +80,218 @@ def generate_meal_chart():
     return buf
 
 
-def create_pdf_report(glucose, foot_risk, retinal_status):
-    pdf = FPDF()
-    pdf.add_page()
-
-    # Title
-    pdf.set_font("Arial", "B", 18)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 12, "Intelligent Diabetes Monitoring System", ln=True, align="C")
-    pdf.set_font("Arial", "B", 13)
-    pdf.set_text_color(100, 116, 139)
-    pdf.cell(0, 8, "Health Summary Report", ln=True, align="C")
-    pdf.ln(4)
-
-    pdf.set_font("Arial", size=10)
-    pdf.set_text_color(100, 116, 139)
-    pdf.cell(0, 7, clean_pdf_text(f"Generated: {datetime.now().strftime('%Y-%m-%d  %H:%M')}"), ln=True, align="C")
-    pdf.ln(6)
-
-    # Divider
-    pdf.set_draw_color(226, 232, 240)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(6)
-
-    # Quick Summary
-    avg_glucose = 142
-    trend = "slightly elevated"
-    summary = (
-        f"Over the past 7 days, your average glucose level was {avg_glucose} mg/dL, which is {trend}. "
-        f"Your meal pattern shows a mix of healthy and high-carbohydrate meals. "
-        f"Foot health remains {foot_risk.lower()} risk. Retinal status: {retinal_status}."
+def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk, retinal_status):
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,
+        rightMargin=2*cm,
+        leftMargin=2*cm,
+        topMargin=2*cm,
+        bottomMargin=2*cm
     )
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 8, "Quick Summary", ln=True)
-    pdf.set_font("Arial", size=10)
-    pdf.set_text_color(71, 85, 105)
-    pdf.multi_cell(0, 6, clean_pdf_text(summary))
-    pdf.ln(5)
 
-    # Glucose Chart
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 8, "Glucose Trend – Last 7 Days", ln=True)
-    glucose_buf = generate_glucose_chart()
-    glucose_buf.seek(0)
-    with open("/tmp/glucose_chart.png", "wb") as f:
-        f.write(glucose_buf.read())
-    pdf.image("/tmp/glucose_chart.png", x=15, w=175)
-    pdf.ln(4)
+    navy   = colors.HexColor("#0b2f4a")
+    teal   = colors.HexColor("#0891b2")
+    slate  = colors.HexColor("#475569")
+    light  = colors.HexColor("#f1f5f9")
+    green  = colors.HexColor("#059669")
+    amber  = colors.HexColor("#f59e0b")
+    red    = colors.HexColor("#ef4444")
+    white  = colors.white
 
-    # Meal Chart
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 8, "Meal Quality – Last 7 Days", ln=True)
-    meal_buf = generate_meal_chart()
-    meal_buf.seek(0)
-    with open("/tmp/meal_chart.png", "wb") as f:
-        f.write(meal_buf.read())
-    pdf.image("/tmp/meal_chart.png", x=40, w=120)
-    pdf.ln(4)
+    styles = getSampleStyleSheet()
 
-    # Divider
-    pdf.set_draw_color(226, 232, 240)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(5)
+    def style(name, **kw):
+        return ParagraphStyle(name, **kw)
 
-    # Foot & Retinal
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 8, "Clinical Assessments", ln=True)
-    pdf.set_font("Arial", size=10)
-    pdf.set_text_color(71, 85, 105)
-    pdf.cell(0, 7, clean_pdf_text(f"  Foot Health:    {foot_risk} Risk – No ulcer indicators detected."), ln=True)
-    pdf.cell(0, 7, clean_pdf_text(f"  Retinal Health: {retinal_status}"), ln=True)
-    pdf.ln(5)
+    title_style    = style("Title",    fontName="Helvetica-Bold", fontSize=20, textColor=navy,  alignment=TA_CENTER, spaceAfter=4)
+    sub_style      = style("Sub",      fontName="Helvetica",      fontSize=12, textColor=slate, alignment=TA_CENTER, spaceAfter=2)
+    date_style     = style("Date",     fontName="Helvetica",      fontSize=9,  textColor=slate, alignment=TA_CENTER, spaceAfter=12)
+    section_style  = style("Section",  fontName="Helvetica-Bold", fontSize=13, textColor=navy,  spaceBefore=14, spaceAfter=6)
+    body_style     = style("Body",     fontName="Helvetica",      fontSize=10, textColor=slate, leading=16)
+    label_style    = style("Label",    fontName="Helvetica-Bold", fontSize=10, textColor=navy)
+    small_style    = style("Small",    fontName="Helvetica-Oblique", fontSize=8, textColor=slate, alignment=TA_CENTER)
+    rec_style      = style("Rec",      fontName="Helvetica",      fontSize=10, textColor=navy,  leading=18)
 
-    # Divider
-    pdf.set_draw_color(226, 232, 240)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(5)
+    story = []
+    W = A4[0] - 4*cm  # usable width
 
-    # Recommendations
-    pdf.set_font("Arial", "B", 12)
-    pdf.set_text_color(11, 47, 74)
-    pdf.cell(0, 8, "Recommendations", ln=True)
-    pdf.set_font("Arial", size=10)
-    pdf.set_text_color(71, 85, 105)
+    # ── HEADER ──────────────────────────────────────────
+    story.append(Paragraph("Intelligent Diabetes Monitoring System", title_style))
+    story.append(Paragraph("Health Summary Report", sub_style))
+    story.append(Paragraph(f"Generated: {datetime.now().strftime('%A, %B %d %Y  |  %I:%M %p')}", date_style))
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Spacer(1, 10))
+
+    # ── PATIENT INFO ────────────────────────────────────
+    story.append(Paragraph("Patient Information", section_style))
+    info_data = [
+        ["Name",   patient.get("name",   "—"), "Gender", patient.get("gender", "—")],
+        ["Email",  patient.get("email",  "—"), "Age",    str(patient.get("age", "—"))],
+    ]
+    info_table = Table(info_data, colWidths=[3*cm, 7.5*cm, 3*cm, 3.5*cm])
+    info_table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,-1), light),
+        ("TEXTCOLOR",  (0,0), (0,-1), navy),
+        ("TEXTCOLOR",  (2,0), (2,-1), navy),
+        ("FONTNAME",   (0,0), (0,-1), "Helvetica-Bold"),
+        ("FONTNAME",   (2,0), (2,-1), "Helvetica-Bold"),
+        ("FONTNAME",   (1,0), (1,-1), "Helvetica"),
+        ("FONTNAME",   (3,0), (3,-1), "Helvetica"),
+        ("FONTSIZE",   (0,0), (-1,-1), 10),
+        ("TEXTCOLOR",  (1,0), (1,-1), slate),
+        ("TEXTCOLOR",  (3,0), (3,-1), slate),
+        ("ROWBACKGROUNDS", (0,0), (-1,-1), [light, white]),
+        ("GRID",       (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("PADDING",    (0,0), (-1,-1), 8),
+        ("ROUNDEDCORNERS", [6]),
+    ]))
+    story.append(info_table)
+    story.append(Spacer(1, 10))
+
+    # ── QUICK SUMMARY ───────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Health Overview", section_style))
+
+    avg_glucose = 142
+    glucose_status = "slightly elevated" if avg_glucose >= 140 else "within normal range"
+    summary_text = (
+        f"Over the past 7 days, the average glucose level was <b>{avg_glucose} mg/dL</b> — {glucose_status}. "
+        f"Most recent reading: <b>{glucose} mg/dL</b>. "
+        f"Meal analysis shows a combination of healthy and high-carbohydrate meals across the period. "
+        f"Foot health status: <b>{foot_risk} Risk</b>. "
+        f"Retinal status: <b>{retinal_status}</b>."
+    )
+    story.append(Paragraph(summary_text, body_style))
+    story.append(Spacer(1, 10))
+
+    # ── GLUCOSE METRICS ─────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Glucose & Nutrition Metrics", section_style))
+
+    metrics_data = [
+        ["Metric", "Value", "Status"],
+        ["Current Glucose",  f"{glucose} mg/dL",  "Elevated" if glucose >= 140 else "Normal"],
+        ["7-Day Avg Glucose",f"{avg_glucose} mg/dL","Elevated" if avg_glucose >= 140 else "Normal"],
+        ["Meal Calories",    f"{calories} kcal",   "—"],
+        ["Carbohydrates",    f"{carbs} g",          "High" if carbs > 60 else "Normal"],
+        ["Protein",          f"{protein} g",        "Normal"],
+        ["Fat",              f"{fat} g",            "Normal"],
+    ]
+
+    def status_color(val):
+        if val in ("Elevated", "High"):   return amber
+        if val == "Normal":               return green
+        return slate
+
+    metrics_table = Table(metrics_data, colWidths=[6*cm, 5*cm, 6*cm])
+    ts = [
+        ("BACKGROUND",  (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",   (0,0), (-1,0),  white),
+        ("FONTNAME",    (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",    (0,0), (-1,-1), 10),
+        ("FONTNAME",    (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",   (0,1), (0,-1),  navy),
+        ("FONTNAME",    (1,1), (1,-1),  "Helvetica"),
+        ("TEXTCOLOR",   (1,1), (1,-1),  slate),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [light, white]),
+        ("GRID",        (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("PADDING",     (0,0), (-1,-1), 8),
+        ("ALIGN",       (0,0), (-1,-1), "LEFT"),
+    ]
+    for row_idx, row in enumerate(metrics_data[1:], start=1):
+        sc = status_color(row[2])
+        ts.append(("TEXTCOLOR", (2, row_idx), (2, row_idx), sc))
+        ts.append(("FONTNAME",  (2, row_idx), (2, row_idx), "Helvetica-Bold"))
+    metrics_table.setStyle(TableStyle(ts))
+    story.append(metrics_table)
+    story.append(Spacer(1, 10))
+
+    # ── GLUCOSE CHART ───────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Glucose Trend – Last 7 Days", section_style))
+    g_buf = generate_glucose_chart()
+    g_img = RLImage(g_buf, width=W, height=W*0.38)
+    story.append(g_img)
+    story.append(Spacer(1, 8))
+
+    # ── MEAL CHART ──────────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Meal Quality – Last 7 Days", section_style))
+    m_buf = generate_meal_chart()
+    m_img = RLImage(m_buf, width=W*0.65, height=W*0.38)
+    story.append(m_img)
+    story.append(Spacer(1, 8))
+
+    # ── CLINICAL ASSESSMENTS ────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Clinical Assessments", section_style))
+
+    foot_color   = green if foot_risk == "Low" else amber
+    retinal_color = green if retinal_status == "No warning detected" else amber
+
+    assess_data = [
+        ["Assessment",      "Result",          "Detail"],
+        ["Foot Health",     f"{foot_risk} Risk", "No ulcer indicators detected"],
+        ["Retinal Health",  retinal_status,      "Based on uploaded scan & glucose pattern"],
+    ]
+    assess_ts = [
+        ("BACKGROUND",  (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",   (0,0), (-1,0),  white),
+        ("FONTNAME",    (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",    (0,0), (-1,-1), 10),
+        ("FONTNAME",    (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",   (0,1), (0,-1),  navy),
+        ("ROWBACKGROUNDS", (0,1), (-1,-1), [light, white]),
+        ("GRID",        (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("PADDING",     (0,0), (-1,-1), 8),
+        ("TEXTCOLOR",   (1,1), (1,1),   foot_color),
+        ("FONTNAME",    (1,1), (1,1),   "Helvetica-Bold"),
+        ("TEXTCOLOR",   (1,2), (1,2),   retinal_color),
+        ("FONTNAME",    (1,2), (1,2),   "Helvetica-Bold"),
+        ("TEXTCOLOR",   (2,1), (2,-1),  slate),
+    ]
+    assess_table = Table(assess_data, colWidths=[5*cm, 5*cm, 7*cm])
+    assess_table.setStyle(TableStyle(assess_ts))
+    story.append(assess_table)
+    story.append(Spacer(1, 10))
+
+    # ── RECOMMENDATIONS ─────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0")))
+    story.append(Paragraph("Recommendations", section_style))
 
     recs = []
     if avg_glucose >= 140:
-        recs.append("Glucose levels are slightly elevated. Consider reducing carbohydrate intake.")
+        recs.append("Glucose levels are slightly elevated. Consider reducing refined carbohydrate intake and monitor post-meal readings.")
+    if carbs > 60:
+        recs.append("Carbohydrate intake is above the recommended range. Aim for balanced meals with fiber and lean protein.")
     if foot_risk == "Low":
-        recs.append("Continue regular foot care and daily self-inspection.")
-    if retinal_status == "No warning detected":
-        recs.append("Maintain routine annual retinal screening.")
+        recs.append("Foot health is currently low risk. Maintain daily foot self-inspection and keep skin moisturized.")
     else:
-        recs.append("Retinal screening is recommended. Please consult your ophthalmologist.")
+        recs.append("Foot risk detected. Please consult a podiatrist for further evaluation.")
+    if retinal_status == "No warning detected":
+        recs.append("No immediate retinal concern. Schedule routine annual retinal screening with an ophthalmologist.")
+    else:
+        recs.append("Retinal screening is recommended. Please arrange an appointment with an ophthalmologist promptly.")
 
-    for rec in recs:
-        pdf.cell(0, 7, clean_pdf_text(f"  - {rec}"), ln=True)
+    for i, rec in enumerate(recs, 1):
+        story.append(Paragraph(f"{i}.  {rec}", rec_style))
 
-    pdf.ln(8)
-    pdf.set_font("Arial", "I", 9)
-    pdf.set_text_color(148, 163, 184)
-    pdf.cell(0, 6, "This report is generated by an AI-assisted prototype and is not a substitute for professional medical advice.", ln=True, align="C")
+    story.append(Spacer(1, 16))
 
-    return pdf.output(dest="S").encode("latin-1", "ignore")
+    # ── FOOTER ──────────────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0")))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph(
+        "This report is generated by an AI-assisted prototype and is not a substitute for professional medical advice. "
+        "Always consult a qualified healthcare provider for diagnosis and treatment.",
+        small_style
+    ))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf.read()
 
 
 # --------------------------------------------------
@@ -191,191 +299,66 @@ def create_pdf_report(glucose, foot_risk, retinal_status):
 # --------------------------------------------------
 st.markdown("""
 <style>
-.stApp {
-    background: #f8fbfd;
-    color: #0B2F4A;
-}
-
-#MainMenu, footer, header {
-    visibility: hidden;
-}
-
-.block-container {
-    padding-top: 1.5rem;
-    padding-bottom: 2rem;
-    max-width: 1280px;
-}
+.stApp { background: #f8fbfd; color: #0B2F4A; }
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1280px; }
 
 .hero-title {
-    font-size: 48px;
-    font-weight: 850;
-    color: #075985;
-    text-align: center;
-    line-height: 1.2;
-    margin-top: 10px;
-    margin-bottom: 28px;
+    font-size: 48px; font-weight: 850; color: #075985;
+    text-align: center; line-height: 1.2; margin-top: 10px; margin-bottom: 28px;
 }
-
-.section-title {
-    font-size: 30px;
-    font-weight: 850;
-    color: #075985;
-    margin-bottom: 6px;
-}
-
-.auth-subtitle {
-    text-align: center;
-    color: #64748b;
-    font-size: 15px;
-    margin-bottom: 24px;
-}
-
-.small-center-text {
-    text-align: center;
-    color: #64748b;
-    margin-top: 18px;
-    margin-bottom: 5px;
-}
+.section-title { font-size: 30px; font-weight: 850; color: #075985; margin-bottom: 6px; }
+.auth-subtitle { text-align: center; color: #64748b; font-size: 15px; margin-bottom: 24px; }
+.small-center-text { text-align: center; color: #64748b; margin-top: 18px; margin-bottom: 5px; }
 
 .card {
-    background: white;
-    padding: 22px;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 6px 18px rgba(11,47,74,0.06);
-    margin-bottom: 20px;
+    background: white; padding: 22px; border-radius: 16px;
+    border: 1px solid #e2e8f0; box-shadow: 0 6px 18px rgba(11,47,74,0.06); margin-bottom: 20px;
 }
-
-.card-title {
-    font-size: 19px;
-    font-weight: 800;
-    color: #0B2F4A;
-    margin-bottom: 14px;
-}
+.card-title { font-size: 19px; font-weight: 800; color: #0B2F4A; margin-bottom: 14px; }
 
 .metric-card {
-    background: white;
-    padding: 22px;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 6px 18px rgba(11,47,74,0.06);
-    min-height: 145px;
+    background: #ffffff; border-radius: 22px; padding: 32px 20px;
+    text-align: center; box-shadow: 0 8px 22px rgba(15,23,42,0.08); min-height: 170px; color: #0b2f4a;
 }
-
-.footer-note {
-    text-align: center;
-    color: #64748b;
-    font-size: 12px;
-    margin-top: 12px;
-}
-
-label {
-    color: #0B2F4A !important;
-    font-weight: 700 !important;
-}
-
-.stTextInput input,
-.stNumberInput input {
-    background-color: white !important;
-    color: #0B2F4A !important;
-    border: 1px solid #b7dce5 !important;
-    border-radius: 12px !important;
-}
-
-.stSelectbox div[data-baseweb="select"] {
-    background-color: white !important;
-    color: #0B2F4A !important;
-    border: 1px solid #b7dce5 !important;
-    border-radius: 12px !important;
-}
-
-.stButton > button {
-    background: linear-gradient(90deg, #0369a1, #0f766e);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 0.7rem 1rem;
-    font-weight: 700;
-}
-
-.stButton > button:hover {
-    background: linear-gradient(90deg, #075985, #115e59);
-    color: white;
-}
-
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #06263d 0%, #031827 100%);
-}
-
-[data-testid="stSidebar"] * {
-    color: white !important;
-}
-
-[data-testid="stSidebar"] hr {
-    border-color: rgba(255,255,255,0.18);
-}
-
-.dashboard-title {
-    font-size: 34px;
-    font-weight: 850;
-    color: #0b2f4a;
-    margin-bottom: 8px;
-}
-
-.dashboard-welcome {
-    font-size: 18px;
-    font-weight: 650;
-    color: #0b2f4a;
-    margin-bottom: 25px;
-}
-
-.metric-card {
-    background: #ffffff;
-    border-radius: 22px;
-    padding: 32px 20px;
-    text-align: center;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-    min-height: 170px;
-    color: #0b2f4a;
-}
-
-.metric-title {
-    font-size: 16px;
-    font-weight: 800;
-    margin-bottom: 18px;
-}
-
-.metric-value {
-    font-size: 42px;
-    font-weight: 900;
-    line-height: 1.1;
-}
-
-.metric-unit {
-    font-size: 18px;
-    font-weight: 700;
-    margin-top: 12px;
-}
+.metric-title  { font-size: 16px; font-weight: 800; margin-bottom: 18px; color: #0b2f4a; }
+.metric-value  { font-size: 42px; font-weight: 900; line-height: 1.1; color: #0b2f4a; }
+.metric-unit   { font-size: 18px; font-weight: 700; margin-top: 12px; color: #475569; }
 
 .section-card {
-    background: #ffffff;
-    border-radius: 22px;
-    padding: 30px;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-    color: #0b2f4a;
-    margin-bottom: 25px;
+    background: #ffffff; border-radius: 22px; padding: 30px;
+    box-shadow: 0 8px 22px rgba(15,23,42,0.08); color: #0b2f4a; margin-bottom: 25px;
 }
+.section-heading { font-size: 26px; font-weight: 850; color: #0b2f4a; margin-bottom: 18px; }
 
-.section-heading {
-    font-size: 30px;
-    font-weight: 850;
-    color: #0b2f4a;
-    margin-bottom: 18px;
-}
+.dashboard-title   { font-size: 34px; font-weight: 850; color: #0b2f4a; margin-bottom: 8px; }
+.dashboard-welcome { font-size: 18px; font-weight: 650; color: #0b2f4a; margin-bottom: 25px; }
 
-@media (max-width: 768px) {
-    .hero-title { font-size: 36px; }
+/* fix st.metric label + value color */
+[data-testid="stMetricLabel"] p { color: #0b2f4a !important; font-weight: 700 !important; }
+[data-testid="stMetricValue"]  { color: #0b2f4a !important; font-weight: 800 !important; }
+
+label { color: #0B2F4A !important; font-weight: 700 !important; }
+.stTextInput input, .stNumberInput input {
+    background-color: white !important; color: #0B2F4A !important;
+    border: 1px solid #b7dce5 !important; border-radius: 12px !important;
 }
+.stSelectbox div[data-baseweb="select"] {
+    background-color: white !important; color: #0B2F4A !important;
+    border: 1px solid #b7dce5 !important; border-radius: 12px !important;
+}
+.stButton > button {
+    background: linear-gradient(90deg, #0369a1, #0f766e);
+    color: white; border: none; border-radius: 12px;
+    padding: 0.7rem 1rem; font-weight: 700;
+}
+.stButton > button:hover { background: linear-gradient(90deg, #075985, #115e59); color: white; }
+
+[data-testid="stSidebar"] { background: linear-gradient(180deg, #06263d 0%, #031827 100%); }
+[data-testid="stSidebar"] * { color: white !important; }
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.18); }
+
+@media (max-width: 768px) { .hero-title { font-size: 36px; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -383,14 +366,13 @@ label {
 # --------------------------------------------------
 # Session state
 # --------------------------------------------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "page" not in st.session_state:
-    st.session_state.page = "login"
-if "patient" not in st.session_state:
-    st.session_state.patient = {}
-if "auth_mode" not in st.session_state:
-    st.session_state.auth_mode = "login"
+for key, default in [
+    ("logged_in", False), ("page", "login"),
+    ("patient", {}), ("auth_mode", "login"),
+    ("retinal_img", None),
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 
 # --------------------------------------------------
@@ -401,11 +383,8 @@ def render_sidebar():
         logo_b64 = get_base64_logo()
         if logo_b64:
             st.markdown(
-                f"""
-                <div style="text-align:center; padding-top:25px; padding-bottom:35px;">
-                    <img src="data:image/png;base64,{logo_b64}" width="230">
-                </div>
-                """,
+                f'<div style="text-align:center;padding-top:25px;padding-bottom:35px;">'
+                f'<img src="data:image/png;base64,{logo_b64}" width="230"></div>',
                 unsafe_allow_html=True
             )
 
@@ -415,24 +394,18 @@ def render_sidebar():
             icons=["house", "eye", "file-earmark-text", "clock-history", "person", "gear", "box-arrow-left"],
             default_index=0,
             styles={
-                "container": {"padding": "0px", "background-color": "#06263d"},
-                "icon": {"color": "white", "font-size": "20px"},
-                "nav-link": {
-                    "background-color": "#06263d",
-                    "color": "white",
-                    "font-size": "16px",
-                    "font-weight": "600",
-                    "text-align": "left",
-                    "margin": "0px",
-                    "padding": "14px 18px",
-                    "border-radius": "0px",
+                "container":        {"padding": "0px", "background-color": "#06263d"},
+                "icon":             {"color": "white", "font-size": "20px"},
+                "nav-link":         {
+                    "background-color": "#06263d", "color": "white",
+                    "font-size": "16px", "font-weight": "600",
+                    "text-align": "left", "margin": "0px",
+                    "padding": "14px 18px", "border-radius": "0px",
                     "--hover-color": "rgba(255,255,255,0.08)",
                 },
                 "nav-link-selected": {
                     "background-color": "rgba(255,255,255,0.08)",
-                    "color": "white",
-                    "border-left": "4px solid #22d3ee",
-                    "font-weight": "700",
+                    "color": "white", "border-left": "4px solid #22d3ee", "font-weight": "700",
                 },
             }
         )
@@ -450,47 +423,37 @@ def render_sidebar():
 # Login / Create Account
 # --------------------------------------------------
 def login_page():
-    logo_left, logo_center, logo_right = st.columns([1, 1.4, 1])
+    _, logo_center, _ = st.columns([1, 1.4, 1])
     with logo_center:
         try:
             st.image(LOGO, width=430)
         except:
             pass
 
-    st.markdown(
-        '<div class="hero-title">Intelligent Diabetes Monitoring System</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown('<div class="hero-title">Intelligent Diabetes Monitoring System</div>', unsafe_allow_html=True)
 
-    left, center, right = st.columns([1, 1.15, 1])
-
+    _, center, _ = st.columns([1, 1.15, 1])
     with center:
         if st.session_state.auth_mode == "login":
             st.markdown('<div class="section-title" style="text-align:center;">Welcome Back</div>', unsafe_allow_html=True)
             st.markdown('<div class="auth-subtitle">Sign in to continue monitoring your health insights.</div>', unsafe_allow_html=True)
 
-            email = st.text_input("Email Address")
+            email    = st.text_input("Email Address")
             password = st.text_input("Password", type="password")
             st.checkbox("Remember me")
 
             if st.button("Sign In", use_container_width=True):
-                if email.strip() == "":
+                if not email.strip():
                     st.error("Enter your email address to continue.")
-                elif password.strip() == "":
+                elif not password.strip():
                     st.error("Enter your password to continue.")
                 else:
-                    st.session_state.patient = {
-                        "name": "Patient",
-                        "email": email,
-                        "age": "N/A",
-                        "gender": "N/A",
-                    }
+                    st.session_state.patient = {"name": "Patient", "email": email, "age": "N/A", "gender": "N/A"}
                     st.session_state.logged_in = True
                     st.session_state.page = "upload"
                     st.rerun()
 
             st.markdown('<div class="small-center-text">Don\'t have an account?</div>', unsafe_allow_html=True)
-
             if st.button("Create Account", use_container_width=True):
                 st.session_state.auth_mode = "create"
                 st.rerun()
@@ -499,32 +462,26 @@ def login_page():
             st.markdown('<div class="section-title" style="text-align:center;">Create Your Account</div>', unsafe_allow_html=True)
             st.markdown('<div class="auth-subtitle">Create an account to start your diabetes monitoring journey.</div>', unsafe_allow_html=True)
 
-            name = st.text_input("Full Name")
-            email = st.text_input("Email Address")
+            name     = st.text_input("Full Name")
+            email    = st.text_input("Email Address")
             password = st.text_input("Password", type="password")
-            age = st.number_input("Age", min_value=1, max_value=100, value=23)
-            gender = st.selectbox("Gender", ["Female", "Male"])
+            age      = st.number_input("Age", min_value=1, max_value=100, value=23)
+            gender   = st.selectbox("Gender", ["Female", "Male"])
 
             if st.button("Create Account and Continue", use_container_width=True):
-                if name.strip() == "":
+                if not name.strip():
                     st.error("Enter your name to continue.")
-                elif email.strip() == "":
+                elif not email.strip():
                     st.error("Enter your email address to continue.")
-                elif password.strip() == "":
+                elif not password.strip():
                     st.error("Create a password to continue.")
                 else:
-                    st.session_state.patient = {
-                        "name": name,
-                        "email": email,
-                        "age": age,
-                        "gender": gender,
-                    }
+                    st.session_state.patient = {"name": name, "email": email, "age": age, "gender": gender}
                     st.session_state.logged_in = True
                     st.session_state.page = "upload"
                     st.rerun()
 
             st.markdown('<div class="small-center-text">Already have an account?</div>', unsafe_allow_html=True)
-
             if st.button("Back to Sign In", use_container_width=True):
                 st.session_state.auth_mode = "login"
                 st.rerun()
@@ -536,83 +493,45 @@ def login_page():
 def upload_page():
     selected = render_sidebar()
 
-    if selected == "Retinal Scan":
-        retinal_scan_page()
-        return
-    elif selected == "Reports":
-        reports_page()
-        return
-    elif selected == "History":
-        history_page()
-        return
-    elif selected == "Profile":
-        profile_page()
-        return
-    elif selected == "Settings":
-        settings_page()
-        return
+    if selected == "Retinal Scan": retinal_scan_page(); return
+    if selected == "Reports":      reports_page();      return
+    if selected == "History":      history_page();      return
+    if selected == "Profile":      profile_page();      return
+    if selected == "Settings":     settings_page();     return
 
     st.markdown(
-        """
-        <div style="margin-bottom:10px;">
-            <div class="section-title">Upload Health Data</div>
-            <div style="color:#475569; font-size:16px;">
-                Upload your health files to generate the diabetes monitoring summary.
-            </div>
-        </div>
-        """,
+        '<div class="section-title">Upload Health Data</div>'
+        '<div style="color:#475569;font-size:16px;margin-bottom:20px;">'
+        'Upload your health files to generate the diabetes monitoring summary.</div>',
         unsafe_allow_html=True
     )
-
-    # Current time display
-    now = datetime.now()
-    st.markdown(
-        f"""
-        <div style="background:white; border-radius:14px; padding:14px 20px; border:1px solid #e2e8f0;
-                    box-shadow:0 4px 12px rgba(11,47,74,0.06); display:inline-block; margin-bottom:20px;">
-            <span style="color:#64748b; font-size:14px; font-weight:600;">Current Date & Time &nbsp;</span>
-            <span style="color:#0b2f4a; font-size:16px; font-weight:800;">
-                {now.strftime("%A, %B %d %Y")} &nbsp;|&nbsp; {now.strftime("%I:%M %p")}
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="card-title">Meal Image</div>
-        <div style="color:#475569; margin-bottom:15px;">Upload a clear meal image for nutrition analysis.</div>
-        """, unsafe_allow_html=True)
-        food_img = st.file_uploader("", type=["jpg", "jpeg", "png"], key="food_upload", label_visibility="hidden")
+        st.markdown('<div class="card"><div class="card-title">Meal Image</div>'
+                    '<div style="color:#475569;margin-bottom:15px;">Upload a clear meal image for nutrition analysis.</div>',
+                    unsafe_allow_html=True)
+        food_img = st.file_uploader("", type=["jpg","jpeg","png"], key="food_upload", label_visibility="hidden")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="card-title">Wearable Device Data</div>
-        <div style="color:#475569; margin-bottom:15px;">Upload wearable data in CSV format.</div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-title">Wearable Device Data</div>'
+                    '<div style="color:#475569;margin-bottom:15px;">Upload wearable data in CSV format.</div>',
+                    unsafe_allow_html=True)
         wearable_csv = st.file_uploader("", type=["csv"], key="wearable_upload", label_visibility="hidden")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="card-title">Foot Assessment Image</div>
-        <div style="color:#475569; margin-bottom:15px;">Upload a clear foot image for risk assessment.</div>
-        """, unsafe_allow_html=True)
-        foot_img = st.file_uploader("", type=["jpg", "jpeg", "png"], key="foot_upload", label_visibility="hidden")
+        st.markdown('<div class="card"><div class="card-title">Foot Assessment Image</div>'
+                    '<div style="color:#475569;margin-bottom:15px;">Upload a clear foot image for risk assessment.</div>',
+                    unsafe_allow_html=True)
+        foot_img = st.file_uploader("", type=["jpg","jpeg","png"], key="foot_upload", label_visibility="hidden")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.session_state.food_img = food_img
+    st.session_state.food_img    = food_img
     st.session_state.wearable_csv = wearable_csv
-    st.session_state.foot_img = foot_img
+    st.session_state.foot_img    = foot_img
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -631,44 +550,35 @@ def upload_page():
 def dashboard_page():
     selected_page = render_sidebar()
 
-    if selected_page == "Retinal Scan":
-        retinal_scan_page()
-        return
-    elif selected_page == "Reports":
-        reports_page()
-        return
-    elif selected_page == "History":
-        history_page()
-        return
-    elif selected_page == "Profile":
-        profile_page()
-        return
-    elif selected_page == "Settings":
-        settings_page()
-        return
+    if selected_page == "Retinal Scan": retinal_scan_page(); return
+    if selected_page == "Reports":      reports_page();      return
+    if selected_page == "History":      history_page();      return
+    if selected_page == "Profile":      profile_page();      return
+    if selected_page == "Settings":     settings_page();     return
 
-    food_img = st.session_state.get("food_img")
+    food_img     = st.session_state.get("food_img")
     wearable_csv = st.session_state.get("wearable_csv")
-    foot_img = st.session_state.get("foot_img")
+    foot_img     = st.session_state.get("foot_img")
+    retinal_img  = st.session_state.get("retinal_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
-    glucose = 145
+    glucose   = 145
     foot_risk = "Low"
-
-    now = datetime.now()
+    now       = datetime.now()
 
     st.markdown(
         f"""
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                    margin-bottom:10px;flex-wrap:wrap;gap:10px;">
             <div>
                 <div class="dashboard-title">Your Health Analysis Summary</div>
-                <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name", "Patient")}</div>
+                <div class="dashboard-welcome">Hello, {st.session_state.patient.get("name","Patient")}</div>
             </div>
-            <div style="background:white; border-radius:14px; padding:12px 20px; border:1px solid #e2e8f0;
-                        box-shadow:0 4px 12px rgba(11,47,74,0.06); text-align:right;">
-                <div style="color:#64748b; font-size:12px; font-weight:600;">Analysis Time</div>
-                <div style="color:#0b2f4a; font-size:18px; font-weight:800;">{now.strftime("%I:%M %p")}</div>
-                <div style="color:#64748b; font-size:12px;">{now.strftime("%A, %B %d %Y")}</div>
+            <div style="background:white;border-radius:14px;padding:12px 20px;
+                        border:1px solid #e2e8f0;box-shadow:0 4px 12px rgba(11,47,74,0.06);text-align:right;">
+                <div style="color:#64748b;font-size:12px;font-weight:600;">Analysis Time</div>
+                <div style="color:#0b2f4a;font-size:18px;font-weight:800;">{now.strftime("%I:%M %p")}</div>
+                <div style="color:#64748b;font-size:12px;">{now.strftime("%A, %B %d %Y")}</div>
             </div>
         </div>
         """,
@@ -678,42 +588,20 @@ def dashboard_page():
     st.markdown("---")
 
     m1, m2, m3 = st.columns(3)
-
-    with m1:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Predicted Glucose</div>
-                <div class="metric-value">{glucose}</div>
-                <div class="metric-unit">mg/dL</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with m2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Foot Risk</div>
-                <div class="metric-value">{foot_risk}</div>
-                <div class="metric-unit">No ulcer detected</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-    with m3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-title">Meal Carbs</div>
-                <div class="metric-value">{carbs}</div>
-                <div class="metric-unit">g</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    for col, title, value, unit in [
+        (m1, "Predicted Glucose", glucose, "mg/dL"),
+        (m2, "Foot Risk",         foot_risk, "No ulcer detected"),
+        (m3, "Meal Carbs",        carbs, "g"),
+    ]:
+        with col:
+            st.markdown(
+                f'<div class="metric-card">'
+                f'<div class="metric-title">{title}</div>'
+                f'<div class="metric-value">{value}</div>'
+                f'<div class="metric-unit">{unit}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
     st.markdown("---")
 
@@ -725,10 +613,10 @@ def dashboard_page():
             st.image(Image.open(food_img), use_container_width=True)
         else:
             st.info("No meal image uploaded.")
-        st.metric("Calories", f"{calories} kcal")
+        st.metric("Calories",      f"{calories} kcal")
         st.metric("Carbohydrates", f"{carbs} g")
-        st.metric("Protein", f"{protein} g")
-        st.metric("Fat", f"{fat} g")
+        st.metric("Protein",       f"{protein} g")
+        st.metric("Fat",           f"{fat} g")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with right:
@@ -738,8 +626,8 @@ def dashboard_page():
             st.dataframe(wearable_data.head(), use_container_width=True)
         else:
             sample_data = pd.DataFrame({
-                "Time": ["10:00 AM", "11:00 AM", "12:00 PM"],
-                "Heart Rate": [72, 80, 76],
+                "Time":             ["10:00 AM", "11:00 AM", "12:00 PM"],
+                "Heart Rate":       [72, 80, 76],
                 "Glucose Estimate": [120, 132, 145]
             })
             st.dataframe(sample_data, use_container_width=True)
@@ -756,20 +644,21 @@ def dashboard_page():
             st.image(Image.open(foot_img), width=350)
         else:
             st.info("No foot image uploaded.")
-        st.success("Low Risk: No ulcer indicators found.")
+        st.success("Low Risk – No ulcer indicators found.")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="section-card"><div class="section-heading">Retinal Health Awareness</div>', unsafe_allow_html=True)
-        retinal_img = st.session_state.get("retinal_img")
+        st.markdown('<div class="section-card"><div class="section-heading">Retinal Health</div>', unsafe_allow_html=True)
         if retinal_img:
             st.image(Image.open(retinal_img), use_container_width=True)
             if glucose >= 180:
-                st.warning("Your glucose pattern may indicate a higher retinal health risk. Please schedule a retinal check-up.")
+                st.warning("Elevated glucose levels detected. Retinal screening is recommended.")
             else:
                 st.success("No retinal risk warning detected at this time.")
         else:
-            st.info("No retinal image uploaded. Go to Retinal Scan in the sidebar to upload.")
+            # Only show warning if glucose is high, otherwise show nothing
+            if glucose >= 180:
+                st.warning("Elevated glucose levels detected. Retinal screening is recommended.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -779,33 +668,26 @@ def dashboard_page():
 def retinal_scan_page():
     st.markdown('<div class="section-title">Retinal Scan</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div style="color:#475569; font-size:16px; margin-bottom:20px;">Upload a retinal image for diabetic retinopathy risk assessment.</div>',
+        '<div style="color:#475569;font-size:16px;margin-bottom:20px;">'
+        'Upload a retinal image for diabetic retinopathy risk assessment.</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("""
-    <div class="card-title">Retinal Image Upload</div>
-    <div style="color:#475569; margin-bottom:15px;">
-        Upload a clear retinal scan image. Supported formats: JPG, JPEG, PNG.
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="card"><div class="card-title">Retinal Image Upload</div>'
+                '<div style="color:#475569;margin-bottom:15px;">'
+                'Upload a clear retinal scan image. Supported formats: JPG, JPEG, PNG.</div>',
+                unsafe_allow_html=True)
 
-    retinal_img = st.file_uploader(
-        "",
-        type=["jpg", "jpeg", "png"],
-        key="retinal_upload",
-        label_visibility="hidden"
-    )
+    retinal_img = st.file_uploader("", type=["jpg","jpeg","png"], key="retinal_upload", label_visibility="hidden")
     st.markdown('</div>', unsafe_allow_html=True)
 
     if retinal_img:
         st.session_state.retinal_img = retinal_img
         st.image(Image.open(retinal_img), caption="Uploaded Retinal Image", use_container_width=True)
-        st.success("Retinal image uploaded successfully. Analysis will appear on the dashboard.")
+        st.success("Retinal image uploaded successfully.")
     else:
-        st.session_state.retinal_img = None
-        st.info("No retinal image uploaded yet.")
+        if st.session_state.retinal_img is None:
+            pass  # no message needed
 
 
 # --------------------------------------------------
@@ -814,35 +696,30 @@ def retinal_scan_page():
 def reports_page():
     st.markdown('<div class="section-title">Health Report</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div style="color:#475569; font-size:16px; margin-bottom:20px;">Generate and download your health summary report as a PDF.</div>',
+        '<div style="color:#475569;font-size:16px;margin-bottom:24px;">'
+        'Your complete health summary — ready to download or share with your doctor.</div>',
         unsafe_allow_html=True
     )
 
-    glucose = 145
+    glucose   = 145
+    calories  = 550
+    carbs     = 65
+    protein   = 28
+    fat       = 18
     foot_risk = "Low"
     retinal_img = st.session_state.get("retinal_img")
-    retinal_status = "No warning detected" if not retinal_img or glucose < 180 else "Further screening recommended"
+    retinal_status = "No warning detected" if (not retinal_img or glucose < 180) else "Further screening recommended"
 
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("""
-    <div class="card-title">Report Contents</div>
-    <ul style="color:#475569; font-size:15px; line-height:2;">
-        <li>Quick health summary</li>
-        <li>Glucose trend chart – last 7 days</li>
-        <li>Meal quality chart – last 7 days</li>
-        <li>Foot assessment result</li>
-        <li>Retinal health status</li>
-        <li>Recommendations</li>
-    </ul>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("Generate PDF Report", use_container_width=True):
+    if st.button("Generate & Download PDF Report", use_container_width=True):
         with st.spinner("Generating your report..."):
-            pdf = create_pdf_report(glucose, foot_risk, retinal_status)
+            pdf_bytes = create_pdf_report(
+                st.session_state.patient,
+                glucose, calories, carbs, protein, fat,
+                foot_risk, retinal_status
+            )
         st.download_button(
-            label="Download PDF Report",
-            data=pdf,
+            label="Download PDF",
+            data=pdf_bytes,
             file_name=f"Health_Report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf",
             use_container_width=True
@@ -850,7 +727,7 @@ def reports_page():
 
 
 # --------------------------------------------------
-# Other Sidebar Pages
+# Other Pages
 # --------------------------------------------------
 def history_page():
     st.markdown('<div class="section-title">History</div>', unsafe_allow_html=True)
@@ -860,10 +737,10 @@ def history_page():
 def profile_page():
     patient = st.session_state.patient
     st.markdown('<div class="section-title">Profile</div>', unsafe_allow_html=True)
-    st.write(f"Name: {patient.get('name', 'Patient')}")
-    st.write(f"Email: {patient.get('email', 'N/A')}")
-    st.write(f"Age: {patient.get('age', 'N/A')}")
-    st.write(f"Gender: {patient.get('gender', 'N/A')}")
+    st.write(f"Name: {patient.get('name','Patient')}")
+    st.write(f"Email: {patient.get('email','N/A')}")
+    st.write(f"Age: {patient.get('age','N/A')}")
+    st.write(f"Gender: {patient.get('gender','N/A')}")
 
 
 def settings_page():
