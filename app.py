@@ -123,8 +123,8 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     header_table = Table(header_data, colWidths=[W])
     header_table.setStyle(TableStyle([
         ("BACKGROUND",   (0,0), (-1,-1), navy),
-        ("TOPPADDING",   (0,0), (-1,-1), 12),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 12),
+        ("TOPPADDING",   (0,0), (-1,-1), 20),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 20),
         ("LEFTPADDING",  (0,0), (-1,-1), 16),
         ("RIGHTPADDING", (0,0), (-1,-1), 16),
     ]))
@@ -136,14 +136,14 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     sub_table = Table(sub_data, colWidths=[W*0.5, W*0.5])
     sub_table.setStyle(TableStyle([
         ("BACKGROUND",   (0,0), (-1,-1), teal),
-        ("TOPPADDING",   (0,0), (-1,-1), 7),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 7),
-        ("LEFTPADDING",  (0,0), (-1,-1), 12),
-        ("RIGHTPADDING", (0,0), (-1,-1), 12),
+        ("TOPPADDING",   (0,0), (-1,-1), 10),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 10),
+        ("LEFTPADDING",  (0,0), (-1,-1), 16),
+        ("RIGHTPADDING", (0,0), (-1,-1), 16),
         ("ALIGN",        (1,0), (1,0),   "RIGHT"),
     ]))
 
-    story.append(KeepTogether([header_table, sub_table, Spacer(1, 12)]))
+    story.append(KeepTogether([header_table, Spacer(1, 6), sub_table, Spacer(1, 16)]))
 
     # ── PATIENT INFO ────────────────────────────────────
     def section_header(text):
