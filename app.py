@@ -773,11 +773,7 @@ def reports_page():
         unsafe_allow_html=True
     )
 
-    glucose   = 145
-    calories  = 550
-    carbs     = 65
-    protein   = 28
-    fat       = 18
+    glucose   = int(st.session_state.get("manual_glucose") or 145)
     foot_risk = "Low"
     retinal_img = st.session_state.get("retinal_img")
     retinal_status = "No warning detected" if (not retinal_img or glucose < 180) else "Further screening recommended"
@@ -786,8 +782,7 @@ def reports_page():
         with st.spinner("Generating your report..."):
             pdf_bytes = create_pdf_report(
                 st.session_state.patient,
-                glucose, calories, carbs, protein, fat,
-                foot_risk, retinal_status
+                glucose, foot_risk, retinal_status
             )
         st.download_button(
             label="Download PDF",
