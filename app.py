@@ -573,7 +573,7 @@ def upload_page():
 
     with col2:
         st.markdown('<div class="card"><div class="card-title">Foot Assessment Image</div>'
-                    '<div style="color:#475569;margin-bottom:15px;">Upload a clear foot image for risk assessment.</div>',
+                    '<div style="color:#475569;margin-bottom:15px;">Upload a foot image for risk assessment. This can be done periodically.</div>',
                     unsafe_allow_html=True)
         foot_img = st.file_uploader("", type=["jpg","jpeg","png"], key="foot_upload", label_visibility="hidden")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -583,13 +583,12 @@ def upload_page():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if food_img and foot_img:
-        st.success("All files uploaded successfully.")
+    if food_img or foot_img:
         if st.button("Start AI Analysis", use_container_width=True):
             st.session_state.page = "dashboard"
             st.rerun()
     else:
-        st.info("Upload the meal image and foot image to continue.")
+        st.info("Upload at least one file to continue.")
 
 
 # --------------------------------------------------
@@ -717,13 +716,11 @@ def dashboard_page():
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown('<div class="section-card"><div class="section-heading">Foot Assessment</div>', unsafe_allow_html=True)
         if foot_img:
+            st.markdown('<div class="section-card"><div class="section-heading">Foot Assessment</div>', unsafe_allow_html=True)
             st.image(Image.open(foot_img), width=350)
-        else:
-            st.info("No foot image uploaded.")
-        st.success("Low Risk – No ulcer indicators found.")
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.success("Low Risk – No ulcer indicators found.")
+            st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.markdown('<div class="section-card"><div class="section-heading">Retinal Health</div>', unsafe_allow_html=True)
