@@ -80,7 +80,7 @@ def generate_meal_chart():
     return buf
 
 
-def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk, retinal_status):
+def create_pdf_report(patient, glucose, foot_risk, retinal_status):
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
         buf,
@@ -215,6 +215,7 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     ]))
 
     # ── GLUCOSE & NUTRITION METRICS ─────────────────────
+    # ── GLUCOSE METRICS ONLY ────────────────────────────
     def status_color(val):
         if val in ("Elevated", "High"):  return amber
         if val == "Normal":              return green
@@ -229,10 +230,6 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         ["Metric", "Value", "Status"],
         ["Current Glucose",   f"{glucose} mg/dL",    "Elevated" if glucose >= 140 else "Normal"],
         ["7-Day Avg Glucose", f"{avg_glucose} mg/dL", "Elevated" if avg_glucose >= 140 else "Normal"],
-        ["Meal Calories",     f"{calories} kcal",     "—"],
-        ["Carbohydrates",     f"{carbs} g",           "High" if carbs > 60 else "Normal"],
-        ["Protein",           f"{protein} g",         "Normal"],
-        ["Fat",               f"{fat} g",             "Normal"],
     ]
     ts = [
         ("BACKGROUND",    (0,0), (-1,0),  navy),
@@ -258,13 +255,13 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     metrics_table.setStyle(TableStyle(ts))
 
     story.append(KeepTogether([
-        section_header("Glucose & Nutrition Metrics"),
+        section_header("Glucose Metrics"),
         Spacer(1, 3),
         metrics_table,
         Spacer(1, 10),
     ]))
 
-    # ── GLUCOSE CHART — keep header + chart together ────
+    # ── GLUCOSE CHART ───────────────────────────────────
     g_buf = generate_glucose_chart()
     story.append(KeepTogether([
         section_header("Glucose Trend – Last 7 Days"),
@@ -273,7 +270,7 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         Spacer(1, 10),
     ]))
 
-    # ── MEAL CHART — keep header + chart together ───────
+    # ── MEAL CHART ──────────────────────────────────────
     m_buf = generate_meal_chart()
     story.append(KeepTogether([
         section_header("Meal Quality – Last 7 Days"),
@@ -283,15 +280,15 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     ]))
 
     # ── CLINICAL ASSESSMENTS ────────────────────────────
-    foot_c  = green       if foot_risk == "Low"                   else amber
-    foot_bg = green_light if foot_risk == "Low"                   else amber_light
+    foot_c  = green       if foot_risk == "Low"                      else amber
+    foot_bg = green_light if foot_risk == "Low"                      else amber_light
     ret_c   = green       if retinal_status == "No warning detected" else amber
     ret_bg  = green_light if retinal_status == "No warning detected" else amber_light
 
     assess_data = [
-        ["Assessment",    "Result",            "Detail"],
-        ["Foot Health",   f"{foot_risk} Risk", "No ulcer indicators detected"],
-        ["Retinal Health", retinal_status,      "Based on glucose pattern & retinal scan"],
+        ["Assessment",     "Result",            "Detail"],
+        ["Foot Health",    f"{foot_risk} Risk", "No ulcer indicators detected"],
+        ["Retinal Health",  retinal_status,      "Based on glucose pattern & retinal scan"],
     ]
     assess_ts = [
         ("BACKGROUND",    (0,0), (-1,0),  navy),
@@ -319,35 +316,6 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         section_header("Clinical Assessments"),
         Spacer(1, 3),
         assess_table,
-        Spacer(1, 10),
-    ]))
-
-    # ── RECOMMENDATIONS ─────────────────────────────────
-    recs = []
-    if avg_glucose >= 140:
-        recs.append("Glucose levels are slightly elevated. Consider reducing refined carbohydrate intake and monitor post-meal readings closely.")
-    if carbs > 60:
-        recs.append("Carbohydrate intake is above the recommended range. Aim for balanced meals with fiber and lean protein.")
-    recs.append("Foot health is currently low risk. Maintain daily foot self-inspection and keep skin moisturized." if foot_risk == "Low"
-                else "Foot risk detected. Please consult a podiatrist for further evaluation.")
-    recs.append("No immediate retinal concern. Schedule routine annual retinal screening with an ophthalmologist." if retinal_status == "No warning detected"
-                else "Retinal screening is recommended. Please arrange an appointment with an ophthalmologist promptly.")
-
-    rec_rows = [[Paragraph(f"{i}.  {rec}", rec_style)] for i, rec in enumerate(recs, 1)]
-    rec_table = Table(rec_rows, colWidths=[W])
-    rec_table.setStyle(TableStyle([
-        ("ROWBACKGROUNDS", (0,0), (-1,-1), [teal_light, colors.HexColor("#f0f9ff")]),
-        ("TOPPADDING",     (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",  (0,0), (-1,-1), 8),
-        ("LEFTPADDING",    (0,0), (-1,-1), 14),
-        ("RIGHTPADDING",   (0,0), (-1,-1), 12),
-        ("BOX",            (0,0), (-1,-1), 0.5, teal),
-    ]))
-
-    story.append(KeepTogether([
-        section_header("Recommendations"),
-        Spacer(1, 4),
-        rec_table,
         Spacer(1, 14),
     ]))
 
@@ -677,16 +645,36 @@ def dashboard_page():
     left, right = st.columns(2)
 
     with left:
-        st.markdown('<div class="section-card"><div class="section-heading">Dietary Analysis</div>', unsafe_allow_html=True)
+        food_html = ""
+        if food_img:
+            pass  # image rendered separately below
+
+        st.markdown(f'''
+        <div class="section-card">
+            <div class="section-heading">Dietary Analysis</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                    <div style="font-size:13px; font-weight:700; color:#475569;">Calories</div>
+                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{calories} <span style="font-size:14px;">kcal</span></div>
+                </div>
+                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                    <div style="font-size:13px; font-weight:700; color:#475569;">Carbohydrates</div>
+                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{carbs} <span style="font-size:14px;">g</span></div>
+                </div>
+                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                    <div style="font-size:13px; font-weight:700; color:#475569;">Protein</div>
+                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{protein} <span style="font-size:14px;">g</span></div>
+                </div>
+                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                    <div style="font-size:13px; font-weight:700; color:#475569;">Fat</div>
+                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{fat} <span style="font-size:14px;">g</span></div>
+                </div>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
         if food_img:
             st.image(Image.open(food_img), use_container_width=True)
-        else:
-            st.info("No meal image uploaded.")
-        st.metric("Calories",      f"{calories} kcal")
-        st.metric("Carbohydrates", f"{carbs} g")
-        st.metric("Protein",       f"{protein} g")
-        st.metric("Fat",           f"{fat} g")
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with right:
         st.markdown('<div class="section-card"><div class="section-heading">Wearable Data Analysis</div>', unsafe_allow_html=True)
