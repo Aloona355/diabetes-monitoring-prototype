@@ -105,7 +105,7 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     def style(name, **kw):
         return ParagraphStyle(name, **kw)
 
-    title_style   = style("T1", fontName="Helvetica-Bold",    fontSize=22, textColor=white,  alignment=TA_CENTER, spaceAfter=2)
+    title_style   = style("T1", fontName="Helvetica-Bold",    fontSize=16, textColor=white,  alignment=TA_CENTER, spaceAfter=2)
     sub_style     = style("T2", fontName="Helvetica",          fontSize=11, textColor=colors.HexColor("#bae6fd"), alignment=TA_CENTER, spaceAfter=0)
     date_style    = style("T3", fontName="Helvetica",          fontSize=9,  textColor=colors.HexColor("#93c5fd"), alignment=TA_CENTER, spaceAfter=0)
     section_style = style("S1", fontName="Helvetica-Bold",     fontSize=12, textColor=navy,  spaceBefore=12, spaceAfter=5,
