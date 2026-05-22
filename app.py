@@ -6,9 +6,9 @@ from datetime import datetime
 import base64
 import random
 from streamlit_option_menu import option_menu
-import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import io
 
 st.set_page_config(page_title="AI Diabetes Monitor", layout="wide")
