@@ -603,9 +603,9 @@ def dashboard_page():
     if selected_page == "Profile":      profile_page();      return
     if selected_page == "Settings":     settings_page();     return
 
-    food_img     = st.session_state.get("food_img")
-    foot_img     = st.session_state.get("foot_img")
-    retinal_img  = st.session_state.get("retinal_img")
+    food_img     = st.session_state.get("food_img") or None
+    foot_img     = st.session_state.get("foot_img") or None
+    retinal_img  = st.session_state.get("retinal_img") or None
 
     calories, carbs, protein, fat = 550, 65, 28, 18
     glucose   = int(st.session_state.get("manual_glucose") or 145)
@@ -623,12 +623,15 @@ def dashboard_page():
 
     st.markdown("---")
 
-    m1, m2, m3 = st.columns(3)
-    for col, title, value, unit in [
-        (m1, "Predicted Glucose", glucose, "mg/dL"),
-        (m2, "Foot Risk",         foot_risk, "No ulcer detected"),
-        (m3, "Meal Carbs",        carbs, "g"),
-    ]:
+    # Build metrics dynamically based on what was uploaded
+    metric_items = [("Predicted Glucose", glucose, "mg/dL")]
+    if foot_img is not None:
+        metric_items.append(("Foot Risk", foot_risk, "No ulcer detected"))
+    if food_img is not None:
+        metric_items.append(("Meal Carbs", carbs, "g"))
+
+    cols = st.columns(len(metric_items))
+    for col, (title, value, unit) in zip(cols, metric_items):
         with col:
             st.markdown(
                 f'<div class="metric-card">'
