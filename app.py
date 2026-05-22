@@ -123,10 +123,10 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     header_table = Table(header_data, colWidths=[W])
     header_table.setStyle(TableStyle([
         ("BACKGROUND",   (0,0), (-1,-1), navy),
-        ("TOPPADDING",   (0,0), (-1,-1), 16),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 6),
-        ("LEFTPADDING",  (0,0), (-1,-1), 12),
-        ("RIGHTPADDING", (0,0), (-1,-1), 12),
+        ("TOPPADDING",   (0,0), (-1,-1), 12),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 12),
+        ("LEFTPADDING",  (0,0), (-1,-1), 16),
+        ("RIGHTPADDING", (0,0), (-1,-1), 16),
     ]))
 
     sub_data = [[
