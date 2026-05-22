@@ -1,6 +1,7 @@
 streamlit
 pandas
-Pillow
+pillow
 fpdf
 streamlit-option-menu
 matplotlib
+reportlab
