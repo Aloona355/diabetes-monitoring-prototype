@@ -781,12 +781,28 @@ def reports_page():
     food_img       = st.session_state.get("food_img")
     foot_img       = st.session_state.get("foot_img")
 
-    # ── inline report ──────────────────────────────
+    # pre-compute all dynamic values to avoid f-string issues inside style attributes
+    report_date      = datetime.now().strftime("%A, %B %d %Y  |  %I:%M %p")
+    patient_name     = st.session_state.patient.get("name", "—")
+    patient_gender   = st.session_state.patient.get("gender", "—")
+    patient_email    = st.session_state.patient.get("email", "—")
+    patient_age      = str(st.session_state.patient.get("age", "—"))
+    overview_bg      = "#fef3c7" if avg_glucose >= 140 else "#d1fae5"
+    glucose_status   = "Elevated" if glucose >= 140 else "Normal"
+    glucose_color    = "#f59e0b" if glucose >= 140 else "#059669"
+    glucose_bg       = "#fef3c7" if glucose >= 140 else "#d1fae5"
+    avg_status       = "Elevated" if avg_glucose >= 140 else "Normal"
+    avg_color        = "#f59e0b" if avg_glucose >= 140 else "#059669"
+    avg_bg           = "#fef3c7" if avg_glucose >= 140 else "#d1fae5"
+    glucose_trend    = "slightly elevated" if avg_glucose >= 140 else "within normal range"
+    ret_color        = "#059669" if retinal_status == "No warning detected" else "#f59e0b"
+    ret_bg           = "#d1fae5" if retinal_status == "No warning detected" else "#fef3c7"
+
     st.markdown(f"""
     <div style="background:white; border-radius:18px; padding:32px 36px;
                 box-shadow:0 6px 24px rgba(11,47,74,0.08); margin-bottom:24px;">
 
-        <div style="background:#0b2f4a; border-radius:10px; padding:18px 20px; margin-bottom:4px;">
+        <div style="background:#0b2f4a; border-radius:10px 10px 0 0; padding:18px 20px;">
             <div style="color:white; font-size:18px; font-weight:800; text-align:center;">
                 Intelligent Diabetes Monitoring System
             </div>
@@ -794,7 +810,7 @@ def reports_page():
         <div style="background:#0891b2; border-radius:0 0 10px 10px; padding:8px 20px;
                     display:flex; justify-content:space-between; margin-bottom:20px;">
             <span style="color:#e0f2fe; font-size:13px;">Health Summary Report</span>
-            <span style="color:#bae6fd; font-size:13px;">{datetime.now().strftime("%A, %B %d %Y  |  %I:%M %p")}</span>
+            <span style="color:#bae6fd; font-size:13px;">{report_date}</span>
         </div>
 
         <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
@@ -802,26 +818,24 @@ def reports_page():
         <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
             <tr style="background:#f1f5f9;">
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a; width:15%;">Name</td>
-                <td style="padding:8px 10px; color:#475569; width:40%;">{st.session_state.patient.get("name","—")}</td>
+                <td style="padding:8px 10px; color:#475569; width:40%;">{patient_name}</td>
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a; width:15%;">Gender</td>
-                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("gender","—")}</td>
+                <td style="padding:8px 10px; color:#475569;">{patient_gender}</td>
             </tr>
             <tr style="background:white;">
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Email</td>
-                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("email","—")}</td>
+                <td style="padding:8px 10px; color:#475569;">{patient_email}</td>
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Age</td>
-                <td style="padding:8px 10px; color:#475569;">{st.session_state.patient.get("age","—")}</td>
+                <td style="padding:8px 10px; color:#475569;">{patient_age}</td>
             </tr>
         </table>
 
         <div style="font-size:13px; font-weight:700; color:white; background:#0891b2;
                     padding:7px 12px; border-radius:6px; margin-bottom:8px;">Health Overview</div>
-        <div style="background:{"#fef3c7" if avg_glucose >= 140 else "#d1fae5"};
-                    border-radius:8px; padding:12px 16px; margin-bottom:16px;
-                    font-size:13px; color:#0b2f4a; line-height:1.7;">
+        <div style="background:{overview_bg}; border-radius:8px; padding:12px 16px;
+                    margin-bottom:16px; font-size:13px; color:#0b2f4a; line-height:1.7;">
             Over the past 7 days, the average glucose level was <b>{avg_glucose} mg/dL</b> —
-            {"slightly elevated" if avg_glucose >= 140 else "within normal range"}.
-            Foot health status: <b>{foot_risk} Risk</b>.
+            {glucose_trend}. Foot health status: <b>{foot_risk} Risk</b>.
             Retinal status: <b>{retinal_status}</b>.
         </div>
 
@@ -836,20 +850,12 @@ def reports_page():
             <tr style="background:#f1f5f9;">
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Current Glucose</td>
                 <td style="padding:8px 10px; color:#475569;">{glucose} mg/dL</td>
-                <td style="padding:8px 10px; font-weight:700;
-                    color:{"#f59e0b" if glucose >= 140 else "#059669"};
-                    background:{"#fef3c7" if glucose >= 140 else "#d1fae5"};">
-                    {"Elevated" if glucose >= 140 else "Normal"}
-                </td>
+                <td style="padding:8px 10px; font-weight:700; color:{glucose_color}; background:{glucose_bg};">{glucose_status}</td>
             </tr>
             <tr style="background:white;">
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">7-Day Avg Glucose</td>
                 <td style="padding:8px 10px; color:#475569;">{avg_glucose} mg/dL</td>
-                <td style="padding:8px 10px; font-weight:700;
-                    color:{"#f59e0b" if avg_glucose >= 140 else "#059669"};
-                    background:{"#fef3c7" if avg_glucose >= 140 else "#d1fae5"};">
-                    {"Elevated" if avg_glucose >= 140 else "Normal"}
-                </td>
+                <td style="padding:8px 10px; font-weight:700; color:{avg_color}; background:{avg_bg};">{avg_status}</td>
             </tr>
         </table>
 
@@ -868,12 +874,8 @@ def reports_page():
             </tr>
             <tr style="background:white;">
                 <td style="padding:8px 10px; font-weight:700; color:#0b2f4a;">Retinal Health</td>
-                <td style="padding:8px 10px; font-weight:700;
-                    color:{"#059669" if retinal_status == "No warning detected" else "#f59e0b"};
-                    background:{"#d1fae5" if retinal_status == "No warning detected" else "#fef3c7"};">
-                    {retinal_status}
-                </td>
-                <td style="padding:8px 10px; color:#475569;">Based on glucose pattern & retinal scan</td>
+                <td style="padding:8px 10px; font-weight:700; color:{ret_color}; background:{ret_bg};">{retinal_status}</td>
+                <td style="padding:8px 10px; color:#475569;">Based on glucose pattern</td>
             </tr>
         </table>
 
