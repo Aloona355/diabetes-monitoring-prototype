@@ -644,35 +644,30 @@ def dashboard_page():
     left, right = st.columns(2)
 
     with left:
-        food_html = ""
         if food_img:
-            pass  # image rendered separately below
-
-        st.markdown(f'''
-        <div class="section-card">
-            <div class="section-heading">Dietary Analysis</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
-                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:700; color:#475569;">Calories</div>
-                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{calories} <span style="font-size:14px;">kcal</span></div>
-                </div>
-                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:700; color:#475569;">Carbohydrates</div>
-                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{carbs} <span style="font-size:14px;">g</span></div>
-                </div>
-                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:700; color:#475569;">Protein</div>
-                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{protein} <span style="font-size:14px;">g</span></div>
-                </div>
-                <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
-                    <div style="font-size:13px; font-weight:700; color:#475569;">Fat</div>
-                    <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{fat} <span style="font-size:14px;">g</span></div>
+            st.markdown(f'''
+            <div class="section-card">
+                <div class="section-heading">Dietary Analysis</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px;">
+                    <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                        <div style="font-size:13px; font-weight:700; color:#475569;">Calories</div>
+                        <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{calories} <span style="font-size:14px;">kcal</span></div>
+                    </div>
+                    <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                        <div style="font-size:13px; font-weight:700; color:#475569;">Carbohydrates</div>
+                        <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{carbs} <span style="font-size:14px;">g</span></div>
+                    </div>
+                    <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                        <div style="font-size:13px; font-weight:700; color:#475569;">Protein</div>
+                        <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{protein} <span style="font-size:14px;">g</span></div>
+                    </div>
+                    <div style="background:#f1f5f9; border-radius:12px; padding:16px;">
+                        <div style="font-size:13px; font-weight:700; color:#475569;">Fat</div>
+                        <div style="font-size:26px; font-weight:900; color:#0b2f4a;">{fat} <span style="font-size:14px;">g</span></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        ''', unsafe_allow_html=True)
-
-        if food_img:
+            ''', unsafe_allow_html=True)
             st.image(Image.open(food_img), use_container_width=True)
 
     with right:
