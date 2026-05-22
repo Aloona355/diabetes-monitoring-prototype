@@ -115,22 +115,19 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     rec_style     = style("RC", fontName="Helvetica",          fontSize=10, textColor=colors.HexColor("#1e3a5f"), leading=18)
 
     story = []
-    W = A4[0] - 4*cm
+    W = A4[0] - 4*cm        # ~15.1 cm usable width
+    CH = W * 0.32           # chart height — compact enough to fit with header
 
     # ── HEADER BANNER ───────────────────────────────────
-    header_data = [[
-        Paragraph("Intelligent Diabetes Monitoring System", title_style),
-    ]]
+    header_data = [[Paragraph("Intelligent Diabetes Monitoring System", title_style)]]
     header_table = Table(header_data, colWidths=[W])
     header_table.setStyle(TableStyle([
-        ("BACKGROUND",  (0,0), (-1,-1), navy),
-        ("TOPPADDING",  (0,0), (-1,-1), 18),
-        ("BOTTOMPADDING",(0,0),(-1,-1), 6),
-        ("LEFTPADDING", (0,0), (-1,-1), 12),
-        ("RIGHTPADDING",(0,0), (-1,-1), 12),
-        ("ROUNDEDCORNERS", [8]),
+        ("BACKGROUND",   (0,0), (-1,-1), navy),
+        ("TOPPADDING",   (0,0), (-1,-1), 16),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 6),
+        ("LEFTPADDING",  (0,0), (-1,-1), 12),
+        ("RIGHTPADDING", (0,0), (-1,-1), 12),
     ]))
-    story.append(header_table)
 
     sub_data = [[
         Paragraph("Health Summary Report", sub_style),
@@ -139,14 +136,14 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     sub_table = Table(sub_data, colWidths=[W*0.5, W*0.5])
     sub_table.setStyle(TableStyle([
         ("BACKGROUND",   (0,0), (-1,-1), teal),
-        ("TOPPADDING",   (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
+        ("TOPPADDING",   (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING",(0,0), (-1,-1), 7),
         ("LEFTPADDING",  (0,0), (-1,-1), 12),
         ("RIGHTPADDING", (0,0), (-1,-1), 12),
         ("ALIGN",        (1,0), (1,0),   "RIGHT"),
     ]))
-    story.append(sub_table)
-    story.append(Spacer(1, 14))
+
+    story.append(KeepTogether([header_table, sub_table, Spacer(1, 12)]))
 
     # ── PATIENT INFO ────────────────────────────────────
     def section_header(text):
@@ -155,15 +152,11 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         t = Table(data, colWidths=[W])
         t.setStyle(TableStyle([
             ("BACKGROUND",   (0,0), (-1,-1), teal),
-            ("TOPPADDING",   (0,0), (-1,-1), 7),
-            ("BOTTOMPADDING",(0,0), (-1,-1), 7),
+            ("TOPPADDING",   (0,0), (-1,-1), 6),
+            ("BOTTOMPADDING",(0,0), (-1,-1), 6),
             ("LEFTPADDING",  (0,0), (-1,-1), 10),
-            ("ROUNDEDCORNERS", [4]),
         ]))
         return t
-
-    story.append(section_header("Patient Information"))
-    story.append(Spacer(1, 4))
 
     info_data = [
         [Paragraph("<b>Name</b>",   style("i", fontName="Helvetica-Bold", fontSize=10, textColor=navy)),
@@ -178,19 +171,21 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
     info_table = Table(info_data, colWidths=[2.5*cm, 7.5*cm, 2.5*cm, 4.5*cm])
     info_table.setStyle(TableStyle([
         ("ROWBACKGROUNDS", (0,0), (-1,-1), [light, white]),
-        ("GRID",       (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("TOPPADDING", (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",(0,0),(-1,-1), 8),
-        ("LEFTPADDING",(0,0),(-1,-1), 10),
+        ("GRID",           (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING",     (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING",  (0,0), (-1,-1), 7),
+        ("LEFTPADDING",    (0,0), (-1,-1), 10),
     ]))
-    story.append(info_table)
-    story.append(Spacer(1, 12))
+
+    story.append(KeepTogether([
+        section_header("Patient Information"),
+        Spacer(1, 3),
+        info_table,
+        Spacer(1, 10),
+    ]))
 
     # ── HEALTH OVERVIEW ─────────────────────────────────
-    story.append(section_header("Health Overview"))
-    story.append(Spacer(1, 6))
-
-    avg_glucose    = st.session_state.get("manual_glucose", glucose)
+    avg_glucose    = int(st.session_state.get("manual_glucose") or glucose)
     glucose_status = "slightly elevated" if avg_glucose >= 140 else "within normal range"
     summary_text   = (
         f"Over the past 7 days, the average glucose level was <b>{avg_glucose} mg/dL</b> — {glucose_status}. "
@@ -199,7 +194,6 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         f"Foot health status: <b>{foot_risk} Risk</b>. "
         f"Retinal status: <b>{retinal_status}</b>."
     )
-
     summary_bg = amber_light if avg_glucose >= 140 else green_light
     summary_data = [[Paragraph(summary_text, style("SB", fontName="Helvetica", fontSize=10,
                                                     textColor=navy, leading=16))]]
@@ -210,16 +204,17 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         ("BOTTOMPADDING",(0,0), (-1,-1), 10),
         ("LEFTPADDING",  (0,0), (-1,-1), 12),
         ("RIGHTPADDING", (0,0), (-1,-1), 12),
-        ("ROUNDEDCORNERS", [6]),
-        ("BOX", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("BOX",          (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
     ]))
-    story.append(summary_table)
-    story.append(Spacer(1, 12))
+
+    story.append(KeepTogether([
+        section_header("Health Overview"),
+        Spacer(1, 4),
+        summary_table,
+        Spacer(1, 10),
+    ]))
 
     # ── GLUCOSE & NUTRITION METRICS ─────────────────────
-    story.append(section_header("Glucose & Nutrition Metrics"))
-    story.append(Spacer(1, 4))
-
     def status_color(val):
         if val in ("Elevated", "High"):  return amber
         if val == "Normal":              return green
@@ -239,125 +234,127 @@ def create_pdf_report(patient, glucose, calories, carbs, protein, fat, foot_risk
         ["Protein",           f"{protein} g",         "Normal"],
         ["Fat",               f"{fat} g",             "Normal"],
     ]
-
     ts = [
-        ("BACKGROUND",   (0,0), (-1,0),  navy),
-        ("TEXTCOLOR",    (0,0), (-1,0),  white),
-        ("FONTNAME",     (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0,0), (-1,-1), 10),
-        ("FONTNAME",     (0,1), (0,-1),  "Helvetica-Bold"),
-        ("TEXTCOLOR",    (0,1), (0,-1),  navy),
-        ("FONTNAME",     (1,1), (1,-1),  "Helvetica"),
-        ("TEXTCOLOR",    (1,1), (1,-1),  slate),
-        ("ROWBACKGROUNDS",(0,1),(-1,-1), [light, white]),
-        ("GRID",         (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("TOPPADDING",   (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
-        ("LEFTPADDING",  (0,0), (-1,-1), 10),
-        ("ALIGN",        (0,0), (-1,-1), "LEFT"),
+        ("BACKGROUND",    (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",     (0,0), (-1,0),  white),
+        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",      (0,0), (-1,-1), 10),
+        ("FONTNAME",      (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",     (0,1), (0,-1),  navy),
+        ("FONTNAME",      (1,1), (1,-1),  "Helvetica"),
+        ("TEXTCOLOR",     (1,1), (1,-1),  slate),
+        ("ROWBACKGROUNDS",(0,1), (-1,-1), [light, white]),
+        ("GRID",          (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING",    (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+        ("LEFTPADDING",   (0,0), (-1,-1), 10),
+        ("ALIGN",         (0,0), (-1,-1), "LEFT"),
     ]
     for row_idx, row in enumerate(metrics_data[1:], start=1):
-        sc = status_color(row[2])
-        sb = status_bg(row[2])
-        ts.append(("TEXTCOLOR",  (2, row_idx), (2, row_idx), sc))
+        ts.append(("TEXTCOLOR",  (2, row_idx), (2, row_idx), status_color(row[2])))
         ts.append(("FONTNAME",   (2, row_idx), (2, row_idx), "Helvetica-Bold"))
-        ts.append(("BACKGROUND", (2, row_idx), (2, row_idx), sb))
-
+        ts.append(("BACKGROUND", (2, row_idx), (2, row_idx), status_bg(row[2])))
     metrics_table = Table(metrics_data, colWidths=[6*cm, 5.5*cm, 5.5*cm])
     metrics_table.setStyle(TableStyle(ts))
-    story.append(metrics_table)
-    story.append(Spacer(1, 12))
 
-    # ── GLUCOSE CHART ───────────────────────────────────
-    story.append(section_header("Glucose Trend – Last 7 Days"))
-    story.append(Spacer(1, 6))
+    story.append(KeepTogether([
+        section_header("Glucose & Nutrition Metrics"),
+        Spacer(1, 3),
+        metrics_table,
+        Spacer(1, 10),
+    ]))
+
+    # ── GLUCOSE CHART — keep header + chart together ────
     g_buf = generate_glucose_chart()
-    story.append(RLImage(g_buf, width=W, height=W * 0.38))
-    story.append(Spacer(1, 12))
+    story.append(KeepTogether([
+        section_header("Glucose Trend – Last 7 Days"),
+        Spacer(1, 4),
+        RLImage(g_buf, width=W, height=CH),
+        Spacer(1, 10),
+    ]))
 
-    # ── MEAL CHART ──────────────────────────────────────
-    story.append(section_header("Meal Quality – Last 7 Days"))
-    story.append(Spacer(1, 6))
+    # ── MEAL CHART — keep header + chart together ───────
     m_buf = generate_meal_chart()
-    story.append(RLImage(m_buf, width=W * 0.65, height=W * 0.38))
-    story.append(Spacer(1, 12))
+    story.append(KeepTogether([
+        section_header("Meal Quality – Last 7 Days"),
+        Spacer(1, 4),
+        RLImage(m_buf, width=W * 0.6, height=CH),
+        Spacer(1, 10),
+    ]))
 
     # ── CLINICAL ASSESSMENTS ────────────────────────────
-    story.append(section_header("Clinical Assessments"))
-    story.append(Spacer(1, 4))
-
-    foot_c    = green if foot_risk == "Low" else amber
-    foot_bg   = green_light if foot_risk == "Low" else amber_light
-    ret_c     = green if retinal_status == "No warning detected" else amber
-    ret_bg    = green_light if retinal_status == "No warning detected" else amber_light
+    foot_c  = green       if foot_risk == "Low"                   else amber
+    foot_bg = green_light if foot_risk == "Low"                   else amber_light
+    ret_c   = green       if retinal_status == "No warning detected" else amber
+    ret_bg  = green_light if retinal_status == "No warning detected" else amber_light
 
     assess_data = [
-        ["Assessment", "Result", "Detail"],
-        ["Foot Health",    f"{foot_risk} Risk",  "No ulcer indicators detected"],
-        ["Retinal Health", retinal_status,        "Based on glucose pattern & retinal scan"],
+        ["Assessment",    "Result",            "Detail"],
+        ["Foot Health",   f"{foot_risk} Risk", "No ulcer indicators detected"],
+        ["Retinal Health", retinal_status,      "Based on glucose pattern & retinal scan"],
     ]
     assess_ts = [
-        ("BACKGROUND",   (0,0), (-1,0),  navy),
-        ("TEXTCOLOR",    (0,0), (-1,0),  white),
-        ("FONTNAME",     (0,0), (-1,0),  "Helvetica-Bold"),
-        ("FONTSIZE",     (0,0), (-1,-1), 10),
-        ("FONTNAME",     (0,1), (0,-1),  "Helvetica-Bold"),
-        ("TEXTCOLOR",    (0,1), (0,-1),  navy),
-        ("TEXTCOLOR",    (2,1), (2,-1),  slate),
-        ("FONTNAME",     (2,1), (2,-1),  "Helvetica"),
-        ("ROWBACKGROUNDS",(0,1),(-1,-1), [light, white]),
-        ("GRID",         (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-        ("TOPPADDING",   (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
-        ("LEFTPADDING",  (0,0), (-1,-1), 10),
-        ("TEXTCOLOR",    (1,1), (1,1),   foot_c),
-        ("FONTNAME",     (1,1), (1,1),   "Helvetica-Bold"),
-        ("BACKGROUND",   (1,1), (1,1),   foot_bg),
-        ("TEXTCOLOR",    (1,2), (1,2),   ret_c),
-        ("FONTNAME",     (1,2), (1,2),   "Helvetica-Bold"),
-        ("BACKGROUND",   (1,2), (1,2),   ret_bg),
+        ("BACKGROUND",    (0,0), (-1,0),  navy),
+        ("TEXTCOLOR",     (0,0), (-1,0),  white),
+        ("FONTNAME",      (0,0), (-1,0),  "Helvetica-Bold"),
+        ("FONTSIZE",      (0,0), (-1,-1), 10),
+        ("FONTNAME",      (0,1), (0,-1),  "Helvetica-Bold"),
+        ("TEXTCOLOR",     (0,1), (0,-1),  navy),
+        ("TEXTCOLOR",     (2,1), (2,-1),  slate),
+        ("FONTNAME",      (2,1), (2,-1),  "Helvetica"),
+        ("ROWBACKGROUNDS",(0,1), (-1,-1), [light, white]),
+        ("GRID",          (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING",    (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+        ("LEFTPADDING",   (0,0), (-1,-1), 10),
+        ("TEXTCOLOR",  (1,1), (1,1), foot_c),  ("FONTNAME", (1,1), (1,1), "Helvetica-Bold"),
+        ("BACKGROUND", (1,1), (1,1), foot_bg),
+        ("TEXTCOLOR",  (1,2), (1,2), ret_c),   ("FONTNAME", (1,2), (1,2), "Helvetica-Bold"),
+        ("BACKGROUND", (1,2), (1,2), ret_bg),
     ]
     assess_table = Table(assess_data, colWidths=[4.5*cm, 5*cm, 7.5*cm])
     assess_table.setStyle(TableStyle(assess_ts))
-    story.append(assess_table)
-    story.append(Spacer(1, 12))
+
+    story.append(KeepTogether([
+        section_header("Clinical Assessments"),
+        Spacer(1, 3),
+        assess_table,
+        Spacer(1, 10),
+    ]))
 
     # ── RECOMMENDATIONS ─────────────────────────────────
-    story.append(section_header("Recommendations"))
-    story.append(Spacer(1, 6))
-
     recs = []
     if avg_glucose >= 140:
         recs.append("Glucose levels are slightly elevated. Consider reducing refined carbohydrate intake and monitor post-meal readings closely.")
     if carbs > 60:
         recs.append("Carbohydrate intake is above the recommended range. Aim for balanced meals with fiber and lean protein.")
-    if foot_risk == "Low":
-        recs.append("Foot health is currently low risk. Maintain daily foot self-inspection and keep skin moisturized.")
-    else:
-        recs.append("Foot risk detected. Please consult a podiatrist for further evaluation.")
-    if retinal_status == "No warning detected":
-        recs.append("No immediate retinal concern. Schedule routine annual retinal screening with an ophthalmologist.")
-    else:
-        recs.append("Retinal screening is recommended. Please arrange an appointment with an ophthalmologist promptly.")
+    recs.append("Foot health is currently low risk. Maintain daily foot self-inspection and keep skin moisturized." if foot_risk == "Low"
+                else "Foot risk detected. Please consult a podiatrist for further evaluation.")
+    recs.append("No immediate retinal concern. Schedule routine annual retinal screening with an ophthalmologist." if retinal_status == "No warning detected"
+                else "Retinal screening is recommended. Please arrange an appointment with an ophthalmologist promptly.")
 
-    rec_rows = [[Paragraph(f"{i}. {rec}", rec_style)] for i, rec in enumerate(recs, 1)]
+    rec_rows = [[Paragraph(f"{i}.  {rec}", rec_style)] for i, rec in enumerate(recs, 1)]
     rec_table = Table(rec_rows, colWidths=[W])
     rec_table.setStyle(TableStyle([
-        ("BACKGROUND",   (0,0), (-1,-1), teal_light),
-        ("TOPPADDING",   (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING",(0,0), (-1,-1), 8),
-        ("LEFTPADDING",  (0,0), (-1,-1), 14),
-        ("RIGHTPADDING", (0,0), (-1,-1), 12),
-        ("ROWBACKGROUNDS",(0,0),(-1,-1), [teal_light, colors.HexColor("#f0f9ff")]),
-        ("BOX",          (0,0), (-1,-1), 0.5, teal),
+        ("ROWBACKGROUNDS", (0,0), (-1,-1), [teal_light, colors.HexColor("#f0f9ff")]),
+        ("TOPPADDING",     (0,0), (-1,-1), 8),
+        ("BOTTOMPADDING",  (0,0), (-1,-1), 8),
+        ("LEFTPADDING",    (0,0), (-1,-1), 14),
+        ("RIGHTPADDING",   (0,0), (-1,-1), 12),
+        ("BOX",            (0,0), (-1,-1), 0.5, teal),
     ]))
-    story.append(rec_table)
-    story.append(Spacer(1, 16))
+
+    story.append(KeepTogether([
+        section_header("Recommendations"),
+        Spacer(1, 4),
+        rec_table,
+        Spacer(1, 14),
+    ]))
 
     # ── FOOTER ──────────────────────────────────────────
     footer_data = [[Paragraph(
-        "This report is generated by an AI-assisted prototype and is not a substitute for professional medical advice. "
-        "Always consult a qualified healthcare provider for diagnosis and treatment.",
+        "This report is generated by an AI-assisted prototype and is not a substitute for "
+        "professional medical advice. Always consult a qualified healthcare provider for diagnosis and treatment.",
         small_style
     )]]
     footer_table = Table(footer_data, colWidths=[W])
@@ -418,6 +415,14 @@ st.markdown("""
 /* fix st.metric label + value color */
 [data-testid="stMetricLabel"] p { color: #0b2f4a !important; font-weight: 700 !important; }
 [data-testid="stMetricValue"]  { color: #0b2f4a !important; font-weight: 800 !important; }
+
+/* fix checkbox label color */
+[data-testid="stCheckbox"] label,
+[data-testid="stCheckbox"] p,
+[data-baseweb="checkbox"] span {
+    color: #0b2f4a !important;
+    font-weight: 600 !important;
+}
 
 label { color: #0B2F4A !important; font-weight: 700 !important; }
 .stTextInput input, .stNumberInput input {
@@ -521,7 +526,7 @@ def login_page():
 
             email    = st.text_input("Email Address")
             password = st.text_input("Password", type="password")
-            st.checkbox("Remember me")
+            st.checkbox("Remember me", label_visibility="visible")
 
             if st.button("Sign In", use_container_width=True):
                 if not email.strip():
@@ -546,7 +551,7 @@ def login_page():
             name     = st.text_input("Full Name")
             email    = st.text_input("Email Address")
             password = st.text_input("Password", type="password")
-            age      = st.number_input("Age", min_value=1, max_value=100, value=23)
+            age      = st.number_input("Age", min_value=1, max_value=120, value=None, placeholder="Enter your age")
             gender   = st.selectbox("Gender", ["Female", "Male"])
 
             if st.button("Create Account and Continue", use_container_width=True):
@@ -556,6 +561,8 @@ def login_page():
                     st.error("Enter your email address to continue.")
                 elif not password.strip():
                     st.error("Create a password to continue.")
+                elif age is None:
+                    st.error("Enter your age to continue.")
                 else:
                     st.session_state.patient = {"name": name, "email": email, "age": age, "gender": gender}
                     st.session_state.logged_in = True
@@ -634,7 +641,7 @@ def dashboard_page():
     retinal_img  = st.session_state.get("retinal_img")
 
     calories, carbs, protein, fat = 550, 65, 28, 18
-    glucose   = st.session_state.get("manual_glucose") or 145
+    glucose   = int(st.session_state.get("manual_glucose") or 145)
     foot_risk = "Low"
 
     st.markdown(
@@ -686,7 +693,9 @@ def dashboard_page():
         now = datetime.now()
 
         # Use manual glucose if entered, else default
-        display_glucose = st.session_state.get("manual_glucose", glucose)
+        default_glucose = 145
+        display_glucose = st.session_state.get("manual_glucose") or default_glucose
+        display_glucose = int(display_glucose)
 
         auto_data = pd.DataFrame({
             "Time": [
